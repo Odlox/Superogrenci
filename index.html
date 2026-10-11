@@ -699,12 +699,12 @@
 <body>
 
     <div id="updateBanner">
-        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.2) yayınlandı!</span>
+        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.4) yayınlandı!</span>
         <button onclick="window.location.reload()">Şimdi Güncelle</button>
     </div>
 
     <header class="app-header">
-        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.2)</span></h1>
+        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.4)</span></h1>
         <div class="header-actions">
             <div class="action-badge-btn" id="openFriendsModalBtn" title="Arkadaşlarım">
                 <span>👥 Arkadaşlarım</span>
@@ -937,11 +937,18 @@
                     
                     <hr style="border-color: var(--border-color); margin: 10px 0;">
 
-                    <!-- TOPLU DERS PROGRAMI İÇE AKTARMA (JSON) -->
+                    <div class="modal-field">
+                        <label><b>🖼️ Fotoğraftan Otomatik Ders Programı Yükle:</b></label>
+                        <input type="file" id="scheduleImageInput" accept="image/*" style="font-size:11px;">
+                        <button id="importScheduleImageBtn" style="background-color: var(--success); color: white; font-weight: bold; padding: 8px; margin-top: 5px;">🤖 Fotoğrafı Yapay Zeka ile Tara & Ekle</button>
+                    </div>
+
+                    <hr style="border-color: var(--border-color); margin: 10px 0;">
+
                     <div class="modal-field">
                         <label><b>📋 Toplu Ders Programı İçe Aktar (JSON):</b></label>
-                        <textarea id="bulkScheduleInput" placeholder='[{"name": "Matematik", "day": "Pazartesi", "time": "09:00", "notifyBefore": 10}]' style="height: 80px; font-family: monospace; font-size: 11px;"></textarea>
-                        <button id="bulkImportScheduleBtn" style="background-color: var(--success); color: white; font-weight: bold; padding: 8px; margin-top: 5px;">📥 Toplu Programı Yükle</button>
+                        <textarea id="bulkScheduleInput" placeholder='[{"name": "Matematik", "day": "Pazartesi", "time": "09:00", "notifyBefore": 10}]' style="height: 60px; font-family: monospace; font-size: 11px;"></textarea>
+                        <button id="bulkImportScheduleBtn" style="background-color: var(--border-color); color: white; font-weight: bold; padding: 6px; margin-top: 5px;">📥 JSON ile Yükle</button>
                     </div>
                 </div>
 
@@ -1045,7 +1052,7 @@
 
     <script>
         const CENTRAL_GEMINI_API_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN";
-        const APP_VERSION = "v1.0.2";
+        const APP_VERSION = "v1.0.4";
 
         if ('serviceWorker' in navigator) {
             const swCode = `
@@ -1354,6 +1361,8 @@
             const scheduleList = document.getElementById('scheduleList');
             const bulkScheduleInput = document.getElementById('bulkScheduleInput');
             const bulkImportScheduleBtn = document.getElementById('bulkImportScheduleBtn');
+            const scheduleImageInput = document.getElementById('scheduleImageInput');
+            const importScheduleImageBtn = document.getElementById('importScheduleImageBtn');
 
             if (addScheduleBtn) {
                 addScheduleBtn.addEventListener('click', () => {
@@ -1378,44 +1387,110 @@
                 });
             }
 
-            // Toplu Ders Programı İçe Aktar (JSON) Fonksiyonu
-            if (bulkImportScheduleBtn) {
-                bulkImportScheduleBtn.addEventListener('click', () => {
-                    const rawJson = bulkScheduleInput.value.trim();
-                    if (!rawJson) {
-                        alert('Lütfen içe aktarmak için JSON formatında veri yapıştırın!');
+            if (importScheduleImageBtn) {
+                importScheduleImageBtn.addEventListener('click', async () => {
+                    const file = scheduleImageInput.files[0];
+                    if (!file) {
+                        alert('Lütfen önce ders programı görseli seçin!');
                         return;
                     }
 
+                    const activeApiKey = CENTRAL_GEMINI_API_KEY;
+                    if (!activeApiKey || activeApiKey === "BURAYA_API_ANAHTARINIZI_YAZIN" || activeApiKey.trim() === '') {
+                        alert('Yapay zeka anahtarı girilmemiş!');
+                        return;
+                    }
+
+                    importScheduleImageBtn.textContent = '⏳ Fotoğraf Taranıyor...';
+                    importScheduleImageBtn.disabled = true;
+
+                    try {
+                        const reader = new FileReader();
+                        reader.onload = async function(e) {
+                            const base64Data = e.target.result.split(',')[1];
+                            const mimeType = file.type || 'image/jpeg';
+
+                            const promptText = `Bu görseldeki haftalık ders programını analiz et. İçindeki tüm dersleri çıkar ve SADECE saf bir JSON dizisi (array) formatında ver. Başka hiçbir açıklama, markdown blok işareti ekleme. Her nesnenin şu anahtarları olsun: "name", "day", "time", "notifyBefore" (10).`;
+
+                            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeApiKey.trim()}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: [{
+                                        parts: [
+                                            { text: promptText },
+                                            { inline_data: { mime_type: mimeType, data: base64Data } }
+                                        ]
+                                    }]
+                                })
+                            });
+
+                            const data = await response.json();
+                            importScheduleImageBtn.textContent = '🤖 Fotoğrafı Yapay Zeka ile Tara & Ekle';
+                            importScheduleImageBtn.disabled = false;
+
+                            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                                let rawResponseText = data.candidates[0].content.parts[0].text.trim();
+                                rawResponseText = rawResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+                                const parsedItems = JSON.parse(rawResponseText);
+                                if (Array.isArray(parsedItems)) {
+                                    let addedCount = 0;
+                                    parsedItems.forEach(item => {
+                                        if (item.name && item.day && item.time) {
+                                            schedules.push({
+                                                id: Date.now() + Math.random(),
+                                                name: item.name,
+                                                day: item.day,
+                                                time: item.time,
+                                                notifyBefore: parseInt(item.notifyBefore) || 10
+                                            });
+                                            addedCount++;
+                                        }
+                                    });
+
+                                    localStorage.setItem('studentSchedules', JSON.stringify(schedules));
+                                    syncDataToCloud();
+                                    renderSchedules();
+                                    scheduleImageInput.value = '';
+                                    alert(`Tebrikler! Fotoğraftan başarıyla ${addedCount} adet ders programa eklendi.`);
+                                }
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    } catch (err) {
+                        importScheduleImageBtn.textContent = '🤖 Fotoğrafı Yapay Zeka ile Tara & Ekle';
+                        importScheduleImageBtn.disabled = false;
+                        alert('Hata oluştu.');
+                    }
+                });
+            }
+
+            if (bulkImportScheduleBtn) {
+                bulkImportScheduleBtn.addEventListener('click', () => {
+                    const rawJson = bulkScheduleInput.value.trim();
+                    if (!rawJson) return;
                     try {
                         const parsedData = JSON.parse(rawJson);
-                        if (!Array.isArray(parsedData)) {
-                            alert('Geçersiz format! Veri bir dizi (array) olmalıdır.');
-                            return;
+                        if (Array.isArray(parsedData)) {
+                            parsedData.forEach(item => {
+                                if (item.name && item.day && item.time) {
+                                    schedules.push({
+                                        id: Date.now() + Math.random(),
+                                        name: item.name,
+                                        day: item.day,
+                                        time: item.time,
+                                        notifyBefore: parseInt(item.notifyBefore) || 10
+                                    });
+                                }
+                            });
+                            localStorage.setItem('studentSchedules', JSON.stringify(schedules));
+                            syncDataToCloud();
+                            renderSchedules();
+                            bulkScheduleInput.value = '';
+                            alert('Toplu dersler eklendi!');
                         }
-
-                        let addedCount = 0;
-                        parsedData.forEach(item => {
-                            if (item.name && item.day && item.time) {
-                                schedules.push({
-                                    id: Date.now() + Math.random(),
-                                    name: item.name,
-                                    day: item.day,
-                                    time: item.time,
-                                    notifyBefore: parseInt(item.notifyBefore) || 10
-                                });
-                                addedCount++;
-                            }
-                        });
-
-                        localStorage.setItem('studentSchedules', JSON.stringify(schedules));
-                        syncDataToCloud();
-                        renderSchedules();
-                        bulkScheduleInput.value = '';
-                        alert(`${addedCount} adet ders başarıyla toplu olarak eklendi!`);
-                    } catch (e) {
-                        alert('JSON çözümleme hatası! Lütfen geçerli bir JSON formatı girdiğinizden emin olun.');
-                    }
+                    } catch (e) { alert('Hatalı JSON!'); }
                 });
             }
 
@@ -1454,14 +1529,12 @@
             let lastAlertMinute = "";
             setInterval(() => {
                 if (schedules.length === 0) return;
-
                 const now = new Date();
                 const daysMap = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
                 const currentDayName = daysMap[now.getDay()];
                 const currentHours = String(now.getHours()).padStart(2, '0');
                 const currentMinutes = String(now.getMinutes()).padStart(2, '0');
                 const currentTimeStr = `${currentHours}:${currentMinutes}`;
-                
                 const currentMinuteKey = `${currentDayName}-${currentTimeStr}`;
                 if (lastAlertMinute === currentMinuteKey) return;
 
@@ -1470,7 +1543,6 @@
                         const [cHour, cMin] = s.time.split(':').map(Number);
                         const classTotalMins = cHour * 60 + cMin;
                         const nowTotalMins = now.getHours() * 60 + now.getMinutes();
-
                         const targetAlertMins = classTotalMins - s.notifyBefore;
 
                         if (nowTotalMins === targetAlertMins) {
@@ -1750,6 +1822,7 @@
                 });
             }
 
+            // DÜZeltilen GERÇEK DOSYA / FOTOĞRAF ANALİZ EDEREK TEST ÜRETME FONKSİYONU
             if (generateTestSheetBtn) {
                 generateTestSheetBtn.addEventListener('click', async () => {
                     const sourceIdx = studioSourceSelect.value;
@@ -1759,89 +1832,89 @@
                     const count = parseInt(studioQuestionCount.value) || 10;
                     const diff = studioDifficulty.value;
 
-                    let sourceText = "";
-                    let sourceTitle = "Genel Not Havuzu";
-
-                    if (directFile) {
-                        sourceTitle = directFile.name;
-                        sourceText = `[Doğrudan Yüklenen Dosya: ${directFile.name} (${directFile.type || 'Belge'})]`;
-                    } else if (sourceIdx !== "") {
-                        const note = notes[sourceIdx];
-                        sourceText = (note.content || "") + (note.file && note.file.name ? ` [Dosya/PDF: ${note.file.name}]` : "");
-                        sourceTitle = note.title;
-                    } else {
-                        sourceText = notes.map(n => n.title + ": " + n.content).join("\n");
-                    }
-
-                    if (!sourceText.trim()) {
-                        alert('Lütfen bir kaynak seçin ya da doğrudan bir dosya / PDF / fotoğraf yükleyin!');
+                    const activeApiKey = CENTRAL_GEMINI_API_KEY;
+                    if (!activeApiKey || activeApiKey === "BURAYA_API_ANAHTARINIZI_YAZIN" || activeApiKey.trim() === '') {
+                        alert('Lütfen geçerli bir Gemini API anahtarı girin!');
                         return;
                     }
 
-                    studioDisplayBox.innerHTML = `<div class="test-sheet-card">⏳ Seçilen kaynak taranıyor, ${grade} kademesine uygun ${count} adet ${diff} seviye soru hazırlanıyor...</div>`;
+                    studioDisplayBox.innerHTML = `<div class="test-sheet-card">⏳ Dosya/Kaynak yapay zekaya yükleniyor ve ${grade} kademesine uygun ${count} adet ${diff} seviye gerçek sorular hazırlanıyor...</div>`;
 
-                    const activeApiKey = CENTRAL_GEMINI_API_KEY;
+                    try {
+                        let requestBodyContents = [];
+                        let sourceTitle = "Yüklenen Dosya / Kaynak";
 
-                    if (activeApiKey && activeApiKey !== "BURAYA_API_ANAHTARINIZI_YAZIN" && activeApiKey.trim() !== '') {
-                        try {
-                            let promptQuery = type === 'test' 
-                                ? `Aşağıdaki metne dayanarak ${grade} kademesine uygun, ${diff} zorlukta ${count} adet çoktan seçmeli test sorusu hazırla:\n\n${sourceText}`
-                                : `Aşağıdaki metne dayanarak ${grade} kademesine uygun, ${diff} zorlukta ${count} adet bilgi/klasik soru hazırla:\n\n${sourceText}`;
+                        let promptQuery = type === 'test' 
+                            ? `Sen profesyonel bir eğitmensin. Aşağıdaki içerik/görsele dayanarak ${grade} kademesine uygun, ${diff} zorlukta tam ${count} adet özgün çoktan seçmeli test sorusu hazırla. Her sorunun 4 şıkkı (A, B, C, D) ve doğru cevabı belirtilsin.`
+                            : `Sen profesyonel bir eğitmensin. Aşağıdaki içerik/görsele dayanarak ${grade} kademesine uygun, ${diff} zorlukta tam ${count} adet bilgi/klasik soru hazırla.`;
 
-                            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeApiKey.trim()}`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ contents: [{ parts: [{ text: promptQuery }] }] })
+                        if (directFile) {
+                            sourceTitle = directFile.name;
+                            const base64Data = await new Promise((resolve) => {
+                                const reader = new FileReader();
+                                reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+                                reader.readAsDataURL(directFile);
                             });
-                            const data = await response.json();
                             
-                            if (data.candidates && data.candidates[0].content.parts[0].text) {
-                                const aiReply = data.candidates[0].content.parts[0].text;
-                                studioDisplayBox.innerHTML = `
-                                    <div class="test-sheet-card" style="border-style: solid;">
-                                        <h3>📄 Test Sayfası: ${escapeHtml(sourceTitle)}</h3>
-                                        <div style="font-size: 11px; color: var(--accent); margin-bottom: 10px;">Kademe: ${grade} | Zorluk: ${diff} | Adet: ${count}</div>
-                                        <hr style="border-color: var(--border-color); margin-bottom: 10px;">
-                                        <div style="font-size: 13px; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(aiReply)}</div>
-                                    </div>
-                                `;
-                                return;
-                            }
-                        } catch (err) {}
-                    }
-
-                    setTimeout(() => {
-                        let htmlContent = `
-                            <div class="test-sheet-card" style="border-style: solid; margin-bottom: 15px;">
-                                <h3 style="color: var(--accent); margin-top:0;">📄 Test Sayfası: ${escapeHtml(sourceTitle)}</h3>
-                                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px;">Kategori: <b>${grade}</b> | Zorluk: <b>${diff}</b> | Soru Tipi: <b>${type === 'test' ? 'Çoktan Seçmeli' : 'Bilgi/Klasik'}</b></div>
-                                <div style="font-size: 11px; color: var(--success);">✔ Dosya veya kaynak başarıyla analiz edildi.</div>
-                            </div>
-                        `;
-
-                        for (let i = 1; i <= count; i++) {
-                            if (type === 'test') {
-                                htmlContent += `
-                                    <div class="test-sheet-card">
-                                        <b>Soru ${i} (${diff}):</b> "${sourceTitle}" belgesine dayanarak aşağıdakilerden hangisi doğrudur?
-                                        <div class="test-option-item">A) Doğru analiz verisi: ${sourceText.substring(0, 30)}...</div>
-                                        <div class="test-option-item">B) Alternatif çeldirici şık.</div>
-                                        <div class="test-option-item">C) Konu dışı seçenek.</div>
-                                        <div class="test-option-item">D) Yanıltıcı çeldirici.</div>
-                                    </div>
-                                `;
+                            requestBodyContents = [{
+                                parts: [
+                                    { text: promptQuery },
+                                    { inline_data: { mime_type: directFile.type || 'image/jpeg', data: base64Data } }
+                                ]
+                            }];
+                        } else if (sourceIdx !== "") {
+                            const note = notes[sourceIdx];
+                            sourceTitle = note.title;
+                            let fullText = (note.content || "") + (note.file && note.file.data ? ` [Ekli Dosya Verisi Mevcut]` : "");
+                            
+                            // Eğer not içinde kayıtlı bir görsel dosyası varsa onu da doğrudan modele verelim
+                            if (note.file && note.file.data && note.file.data.startsWith('data:image')) {
+                                const mimeMatch = note.file.data.match(/data:(.*?);base64,/);
+                                const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+                                const base64Data = note.file.data.split(',')[1];
+                                
+                                requestBodyContents = [{
+                                    parts: [
+                                        { text: `${promptQuery}\nİçerik Metni: ${fullText}` },
+                                        { inline_data: { mime_type: mimeType, data: base64Data } }
+                                    ]
+                                }];
                             } else {
-                                htmlContent += `
-                                    <div class="test-sheet-card">
-                                        <b>Soru ${i} [${diff} Klasik Soru]:</b> "${sourceTitle}" içeriğindeki temel esasları açıklayınız.<br>
-                                        <div style="margin-top: 8px; font-size: 12px; color: var(--accent);">💡 <i>Cevap İpucu: Yüklenen dokümandaki anahtar kavramlar dikkate alınmalıdır.</i></div>
-                                    </div>
-                                `;
+                                requestBodyContents = [{
+                                    parts: [{ text: `${promptQuery}\n\nİçerik:\n${fullText}` }]
+                                }];
                             }
+                        } else {
+                            let allText = notes.map(n => n.title + ": " + n.content).join("\n");
+                            requestBodyContents = [{
+                                parts: [{ text: `${promptQuery}\n\nNot Havuzum:\n${allText}` }]
+                            }];
                         }
 
-                        studioDisplayBox.innerHTML = htmlContent;
-                    }, 600);
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeApiKey.trim()}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: requestBodyContents })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.candidates && data.candidates[0].content.parts[0].text) {
+                            const aiReply = data.candidates[0].content.parts[0].text;
+                            studioDisplayBox.innerHTML = `
+                                <div class="test-sheet-card" style="border-style: solid;">
+                                    <h3>📄 Test Sayfası: ${escapeHtml(sourceTitle)}</h3>
+                                    <div style="font-size: 11px; color: var(--accent); margin-bottom: 10px;">Kademe: ${grade} | Zorluk: ${diff} | Adet: ${count}</div>
+                                    <hr style="border-color: var(--border-color); margin-bottom: 10px;">
+                                    <div style="font-size: 13px; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(aiReply)}</div>
+                                </div>
+                            `;
+                        } else {
+                            studioDisplayBox.innerHTML = `<div class="test-sheet-card" style="border-color:var(--danger);">Yapay zeka yanıt oluşturamadı. Lütfen API anahtarınızı kontrol edin.</div>`;
+                        }
+                    } catch (err) {
+                        studioDisplayBox.innerHTML = `<div class="test-sheet-card" style="border-color:var(--danger);">Dosya analiz edilirken bir hata oluştu.</div>`;
+                    }
                 });
             }
 
