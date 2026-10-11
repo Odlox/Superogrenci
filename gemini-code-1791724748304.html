@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Süper Öğrenci & Soru Stüdyosu</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Süper Öğrenci Çalışma Programı","short_name":"SüperÖğrenci","start_url":".","display":"standalone","background_color":"%230f172a","theme_color":"%2338bdf8","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2921/2921222.png","sizes":"512x512","type":"image/png"}]}'>
+    <meta name="theme-color" content="#38bdf8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Firebase SDK'ları -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDS6KL1j1yCAA8S-nXvtHb6BnT5kHde2Wc",
+            authDomain: "super-ogrenci.firebaseapp.com",
+            projectId: "super-ogrenci",
+            storageBucket: "super-ogrenci.firebasestorage.app",
+            messagingSenderId: "954668642022",
+            appId: "1:954668642022:web:358f0f0fde760920a41527",
+            measurementId: "G-NFDNR7NL7K"
+        };
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            window.db = db;
+            window.fbModules = { doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion };
+            
+            if (window.initCloudSync) {
+                window.initCloudSync();
+            }
+        } catch (e) {
+            console.warn("Çevrimdışı mod aktif.");
+            const el = document.getElementById('cloudStatusText');
+            if (el) el.textContent = "📴 Çevrimdışı Mod (Yerel)";
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #0f172a;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --success: #10b981;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 10px 15px 20px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+
+        /* Yalnızca Yeni Sürüm Yayınlandığında Açılacak Dinamik Çubuk */
+        #updateBanner {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            background-color: var(--success);
+            color: #ffffff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 13px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        #updateBanner button {
+            background-color: #ffffff;
+            color: var(--bg-main);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .app-header {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            background-color: var(--bg-card);
+            padding: 12px 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+        }
+        .logo-title {
+            color: var(--accent);
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-tabs {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .nav-tab-btn {
+            flex: 1;
+            background-color: var(--bg-card);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        .nav-tab-btn.active {
+            background-color: var(--accent);
+            color: var(--bg-main);
+            border-color: var(--accent);
+        }
+
+        .action-badge-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 30px;
+            cursor: pointer;
+            color: var(--text-main);
+            font-size: 13px;
+            font-weight: 500;
+            transition: border-color 0.2s, transform 0.1s;
+        }
+        .action-badge-btn:hover {
+            border-color: var(--accent);
+        }
+        .avatar-circle {
+            width: 28px;
+            height: 28px;
+            background-color: var(--accent);
+            color: var(--bg-main);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .view-container {
+            width: 100%;
+            max-width: 1200px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .view-container.active {
+            display: flex;
+        }
+
+        .main-wrapper {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+        }
+        .left-column {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 0;
+        }
+        .right-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: var(--bg-card);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            height: fit-content;
+            box-sizing: border-box;
+            min-width: 0;
+        }
+        
+        .top-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .dashboard-card {
+            background-color: var(--bg-card);
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .pomodoro-settings {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 5px 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .pomodoro-settings input {
+            width: 45px;
+            padding: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .pomodoro-timer {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--accent);
+            margin: 5px 0;
+        }
+        .pomodoro-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .form-card {
+            background-color: var(--bg-card);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-sizing: border-box;
+        }
+        input, textarea, select {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-input);
+            color: var(--text-main);
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+            font-family: inherit;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--accent);
+        }
+        textarea {
+            resize: vertical;
+            height: 60px;
+        }
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+        .row select, .row input {
+            flex: 1;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            background-color: var(--accent);
+            color: var(--bg-main);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+        .mic-btn {
+            background-color: var(--border-color);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+        .mic-btn.listening {
+            background-color: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .filter-search-bar {
+            display: flex;
+            gap: 10px;
+        }
+        .filter-search-bar input {
+            flex: 2;
+        }
+        .filter-search-bar select {
+            flex: 1;
+        }
+
+        .notes-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .note-card {
+            background-color: var(--bg-card);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border-left: 6px solid var(--accent);
+            box-sizing: border-box;
+        }
+        .note-card.priority-Yüksek { border-left-color: #ef4444; }
+        .note-card.priority-Orta { border-left-color: #f59e0b; }
+        .note-card.priority-Düşük { border-left-color: #10b981; }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            gap: 10px;
+        }
+        .note-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-main);
+            word-break: break-word;
+        }
+        .badges {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            background-color: var(--border-color);
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+        .note-content {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .note-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            max-height: 180px;
+            object-fit: cover;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .checkbox-container input {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+        .note-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            padding-top: 8px;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .delete-btn {
+            background-color: var(--danger);
+            color: white;
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+        }
+        .delete-btn:hover {
+            background-color: var(--danger-hover);
+        }
+
+        /* Stüdyo & Ders Programı Tasarımı */
+        .studio-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            box-sizing: border-box;
+        }
+        .studio-header-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .studio-title {
+            color: var(--accent);
+            font-size: 18px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .studio-workspace {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 15px;
+        }
+        .studio-controls-box {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .studio-display-box {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .test-sheet-card {
+            background-color: var(--bg-card);
+            border: 1px dashed var(--accent);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .test-option-item {
+            background-color: var(--border-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .test-option-item:hover {
+            background-color: var(--accent);
+            color: var(--bg-main);
+        }
+
+        .social-section {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+        .social-section h3 {
+            color: var(--accent);
+            font-size: 14px;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .social-input-group {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        .social-input-group input {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+        .social-input-group button {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+        .social-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 120px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .social-list-item {
+            background-color: var(--bg-main);
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            word-break: break-word;
+        }
+        .chat-box {
+            background-color: var(--bg-main);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+        .chat-messages {
+            flex: 1;
+            min-height: 0;
+            padding: 8px;
+            overflow-y: auto;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .chat-msg {
+            background-color: var(--border-color);
+            color: var(--text-main);
+            padding: 6px 8px;
+            border-radius: 6px;
+            word-break: break-word;
+        }
+        .chat-input-area {
+            display: flex;
+            border-top: 1px solid var(--border-color);
+        }
+        .chat-input-area input {
+            flex: 1;
+            border: none;
+            padding: 6px 10px;
+            font-size: 12px;
+            background: transparent;
+        }
+        .chat-input-area button {
+            border-radius: 0;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .modal-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-sizing: border-box;
+        }
+        .modal-card h2 {
+            margin: 0 0 5px 0;
+            color: var(--accent);
+            font-size: 16px;
+        }
+        .modal-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        .color-presets-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 5px;
+        }
+        .color-swatch {
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.15s, box-shadow 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .color-swatch:hover {
+            transform: scale(1.05);
+        }
+        .color-swatch.active {
+            border-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .modal-actions button {
+            flex: 1;
+        }
+        .secondary-btn {
+            background-color: var(--border-color);
+            color: var(--text-main);
+        }
+        .secondary-btn:hover {
+            background-color: #475569;
+        }
+
+        @media (max-width: 900px) {
+            .main-wrapper {
+                flex-direction: column;
+            }
+            .studio-workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Güncelleme Bildirim Çubuğu -->
+    <div id="updateBanner">
+        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.2) yayınlandı!</span>
+        <button onclick="window.location.reload()">Şimdi Güncelle</button>
+    </div>
+
+    <header class="app-header">
+        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.2)</span></h1>
+        <div class="header-actions">
+            <!-- Özel Arkadaşlar Penceresi Butonu -->
+            <div class="action-badge-btn" id="openFriendsModalBtn" title="Arkadaşlarım">
+                <span>👥 Arkadaşlarım</span>
+            </div>
+            <!-- Profil Ayarları Butonu -->
+            <div class="action-badge-btn" id="openSettingsModalBtn" title="Profil Ayarları">
+                <span id="headerUserName">Öğrenci</span>
+                <div class="avatar-circle" id="headerAvatarText">Ö</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Üst Sekmeler -->
+    <div class="nav-tabs">
+        <div class="nav-tab-btn active" id="tabBtnNotes" onclick="switchView('notesView')">📚 Notlar & Pomodoro</div>
+        <div class="nav-tab-btn" id="tabBtnStudio" onclick="switchView('quizStudioView')">📝 Soru & Test</div>
+        <div class="nav-tab-btn" id="tabBtnSchedule" onclick="switchView('scheduleView')">📅 Ders Programı</div>
+    </div>
+
+    <!-- SEKME 1: Notlar ve Çalışma Paneli -->
+    <div id="notesView" class="view-container active">
+        <div class="main-wrapper">
+            <div class="left-column">
+                <div class="top-dashboard">
+                    <div class="dashboard-card">
+                        <span style="font-size: 12px; color: var(--text-muted);">🍅 Pomodoro Sayacı</span>
+                        <div class="pomodoro-settings">
+                            <span>Süre:</span>
+                            <input type="number" id="pomoMinutesInput" value="25" min="1" max="180"> dk
+                        </div>
+                        <div class="pomodoro-timer" id="pomodoroTimer">25:00</div>
+                        <div class="pomodoro-btns">
+                            <button id="pomoStart" style="padding: 4px 8px; font-size: 11px;">Başlat</button>
+                            <button id="pomoReset" style="padding: 4px 8px; font-size: 11px; background-color: var(--border-color); color: var(--text-main);">Sıfırla</button>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <span style="font-size: 12px; color: var(--text-muted);">💾 Bulut & Veri</span>
+                        <p style="font-size: 10px; margin: 4px 0; color: var(--accent);" id="cloudStatusText">☁️ Çevrimdışı Hazır</p>
+                        <button id="exportBtn" style="padding: 5px 10px; font-size: 11px;">Notları İndir (TXT)</button>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <input type="text" id="noteTitle" placeholder="Not Başlığı (Örn: Fizik Vize Konuları / PDF Adı)">
+                    <textarea id="noteContent" placeholder="Notunuzu yazın veya PDF metnini yapıştırın..."></textarea>
+                    
+                    <div class="row">
+                        <select id="noteCategory">
+                            <option value="Ders Notu">📚 Ders Notu</option>
+                            <option value="Ödev">📝 Ödev</option>
+                            <option value="Sınav">🎯 Sınav</option>
+                            <option value="Kişisel">💡 Kişisel</option>
+                        </select>
+                        <select id="notePriority">
+                            <option value="Orta">🟡 Orta</option>
+                            <option value="Yüksek">🔴 Yüksek</option>
+                            <option value="Düşük">🟢 Düşük</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <input type="file" id="noteImage" accept="image/*,application/pdf,.doc,.docx,.txt">
+                    </div>
+
+                    <div class="btn-group">
+                        <button id="addBtn" style="flex: 2;">Notu & Dosyayı Kaydet</button>
+                        <button id="micBtn" class="mic-btn" style="flex: 1;" title="Sesle Yazdır">🎙️ Sesle Yaz</button>
+                    </div>
+                </div>
+
+                <div class="filter-search-bar">
+                    <input type="text" id="searchInput" placeholder="🔍 Notlarda ara...">
+                    <select id="filterCategory">
+                        <option value="Tümü">Tümü</option>
+                        <option value="Ders Notu">📚 Ders</option>
+                        <option value="Ödev">📝 Ödev</option>
+                        <option value="Sınav">🎯 Sınav</option>
+                        <option value="Kişisel">💡 Kişisel</option>
+                    </select>
+                </div>
+
+                <div class="notes-grid" id="notesGrid"></div>
+            </div>
+
+            <!-- Sağ Sütun: Liderlik, Gruplar ve Sohbet -->
+            <div class="right-column">
+                <div class="social-section">
+                    <h3>🏆 Çalışma Süreleri (Liderlik)</h3>
+                    <ul class="social-list" id="leaderboardList"></ul>
+                </div>
+
+                <div class="social-section">
+                    <h3>🏫 Çalışma Grupları</h3>
+                    <div class="social-input-group">
+                        <input type="text" id="groupInput" placeholder="Grup Adı (Örn: Matematik)">
+                        <button id="addGroupBtn">Grup Kur</button>
+                    </div>
+                    <div class="social-input-group">
+                        <input type="text" id="joinGroupInput" placeholder="6 Haneli Kod (Örn: 482910)">
+                        <button id="joinGroupBtn" style="background-color: var(--success); color: white;">Katıl</button>
+                    </div>
+                    <ul class="social-list" id="groupList"></ul>
+                </div>
+
+                <div class="social-section" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+                    <h3>💬 Canlı Sohbet</h3>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px;" id="currentChatRoom">Aktif Oda: Genel Çalışma Odası</div>
+                    <div class="chat-box" id="chatBox">
+                        <div class="chat-messages" id="chatMessages"></div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chatInput" placeholder="Mesaj yaz...">
+                            <button id="sendChatBtn">Gönder</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEKME 2: Soru & Test Stüdyosu -->
+    <div id="quizStudioView" class="view-container">
+        <div class="studio-container">
+            <div class="studio-header-banner">
+                <h2 class="studio-title">📝 Soru & Test Stüdyosu</h2>
+                <span style="font-size: 11px; color: var(--text-muted);">PDF, Fotoğraf ve Notlar Üzerinden Özel Soru / Test Sayfası Üretici</span>
+            </div>
+
+            <div class="studio-workspace">
+                <div class="studio-controls-box">
+                    <div class="modal-field">
+                        <label><b>1. Kaynak Seçin (Not Havuzundan):</b></label>
+                        <select id="studioSourceSelect">
+                            <option value="">-- Tüm Notlar / Havuz (Genel) --</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-field">
+                        <label><b>Veya Doğrudan Dosya / PDF / Fotoğraf Yükle:</b></label>
+                        <input type="file" id="studioDirectFile" accept="image/*,application/pdf,.doc,.docx,.txt">
+                    </div>
+
+                    <div class="modal-field">
+                        <label><b>2. Eğitim Kademesi:</b></label>
+                        <select id="studioGradeSelect">
+                            <option value="İlkokul / Ortaokul">İlkokul / Ortaokul</option>
+                            <option value="Lise / YKS (TYT-AYT)" selected>Lise / YKS (TYT-AYT)</option>
+                            <option value="Üniversite / Ön Lisans">Üniversite / Ön Lisans</option>
+                            <option value="Genel / Diğer">Genel / Diğer</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-field">
+                        <label><b>3. İçerik / Soru Türü:</b></label>
+                        <select id="studioTypeSelect">
+                            <option value="test">Çoktan Seçmeli Test</option>
+                            <option value="bilgi">Bilgi / Klasik Sorular</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-field">
+                        <label><b>4. Soru Adedi:</b></label>
+                        <input type="number" id="studioQuestionCount" value="10" min="1" max="50">
+                    </div>
+
+                    <div class="modal-field">
+                        <label><b>5. Zorluk Seviyesi:</b></label>
+                        <select id="studioDifficulty">
+                            <option value="Kolay">🟢 Kolay</option>
+                            <option value="Orta" selected>🟡 Orta</option>
+                            <option value="Zor">🔴 Zor</option>
+                        </select>
+                    </div>
+
+                    <button id="generateTestSheetBtn" style="margin-top: 10px; background-color: var(--accent); color: var(--bg-main); font-weight: bold; padding: 12px;">🚀 Test / Soru Sayfası Oluştur</button>
+                </div>
+
+                <div class="studio-display-box" id="studioDisplayBox">
+                    <div class="test-sheet-card" style="border-style: solid;">
+                        <h3>Hoş Geldiniz! 🎯</h3>
+                        <p style="font-size: 13px; color: var(--text-muted);">Sol taraftaki panelden doğrudan dosya (PDF/fotoğraf) yükleyebilir veya not havuzunuzu seçerek kademe ve zorluğa uygun anında özel bir test veya soru sayfası oluşturabilirsiniz.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEKME 3: Ders Programı & Bildirimler -->
+    <div id="scheduleView" class="view-container">
+        <div class="studio-container">
+            <div class="studio-header-banner">
+                <h2 class="studio-title">📅 Ders Programı & Akıllı Bildirimler</h2>
+                <span style="font-size: 11px; color: var(--text-muted);">Derslerini ekle, belirlediğin süre yaklaşınca telefon bildirim sesiyle haberdar ol!</span>
+            </div>
+
+            <div class="studio-workspace">
+                <div class="studio-controls-box">
+                    <div class="modal-field">
+                        <label><b>Ders Adı:</b></label>
+                        <input type="text" id="schClassName" placeholder="Örn: Matematik Vize / Algoritma">
+                    </div>
+
+                    <div class="modal-field">
+                        <label><b>Hangi Gün?:</b></label>
+                        <select id="schDay">
+                            <option value="Pazartesi">Pazartesi</option>
+                            <option value="Salı">Salı</option>
+                            <option value="Çarşamba">Çarşamba</option>
+                            <option value="Perşembe">Perşembe</option>
+                            <option value="Cuma">Cuma</option>
+                            <option value="Cumartesi">Cumartesi</option>
+                            <option value="Pazar">Pazar</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-field">
+                        <label><b>Ders Başlangıç Saati:</b></label>
+                        <input type="time" id="schTime" value="09:00">
+                    </div>
+
+                    <div class="modal-field">
+                        <label><b>Bildirim Zamanı (Kaç dk önce?):</b></label>
+                        <select id="schNotifyBefore">
+                            <option value="5">Dersten 5 dakika önce</option>
+                            <option value="10" selected>Dersten 10 dakika önce</option>
+                            <option value="15">Dersten 15 dakika önce</option>
+                            <option value="30">Dersten 30 dakika önce</option>
+                            <option value="60">Dersten 1 saat önce</option>
+                        </select>
+                    </div>
+
+                    <button id="addScheduleBtn" style="margin-top: 10px; background-color: var(--accent); color: var(--bg-main); font-weight: bold; padding: 12px;">➕ Dersi Programa Ekle</button>
+                </div>
+
+                <div class="studio-display-box" id="scheduleDisplayBox">
+                    <div class="test-sheet-card" style="border-style: solid;">
+                        <h3>Haftalık Ders Programınız 📋</h3>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Eklediğiniz tüm dersler aşağıda listelenir. Vakti geldiğinde telefon bildirim zil sesiyle uyarılacaksınız.</p>
+                        <ul class="social-list" id="scheduleList" style="max-height: none; display: flex; flex-direction: column; gap: 8px;"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÖZEL ARKADAŞLAR MODALI -->
+    <div class="modal-overlay" id="friendsModal">
+        <div class="modal-card">
+            <h2>👥 Arkadaşlarım & İstekler</h2>
+
+            <div class="modal-field">
+                <label>Arkadaş ID ile İstek Gönder:</label>
+                <div class="social-input-group">
+                    <input type="text" id="friendIdInput" placeholder="Örn: STU-1234">
+                    <button id="addFriendBtn">İstek At</button>
+                </div>
+            </div>
+
+            <div class="modal-field">
+                <label>🔔 Gelen Arkadaşlık İstekleri:</label>
+                <ul class="social-list" id="friendRequestsList" style="max-height: 100px;"></ul>
+            </div>
+
+            <div class="modal-field">
+                <label>👥 Ekli Arkadaşlarım:</label>
+                <ul class="social-list" id="friendList" style="max-height: 150px;"></ul>
+            </div>
+
+            <div class="modal-actions">
+                <button id="closeFriendsModalBtn" class="secondary-btn">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profil & Ayarlar Modalı -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-card">
+            <h2>⚙️ Profil Ayarları</h2>
+            
+            <div class="modal-field">
+                <label>Kullanıcı Adınız:</label>
+                <input type="text" id="modalNameInput" placeholder="Adınızı girin...">
+            </div>
+            
+            <div class="modal-field">
+                <label>Öğrenci ID (Cihaza Sabit):</label>
+                <div style="background-color: var(--bg-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; font-weight: bold; color: var(--accent); letter-spacing: 1px;" id="modalDisplayId">
+                    STU-XXXX
+                </div>
+            </div>
+
+            <div class="modal-field">
+                <label>🎨 Tema Vurgu Rengi:</label>
+                <div class="color-presets-grid" id="colorPresets">
+                    <div class="color-swatch" data-color="#38bdf8" style="background-color: #38bdf8;" title="Sky Mavi"></div>
+                    <div class="color-swatch" data-color="#6366f1" style="background-color: #6366f1;" title="İndigo"></div>
+                    <div class="color-swatch" data-color="#8b5cf6" style="background-color: #8b5cf6;" title="Mor"></div>
+                    <div class="color-swatch" data-color="#ec4899" style="background-color: #ec4899;" title="Pembe"></div>
+                    <div class="color-swatch" data-color="#ef4444" style="background-color: #ef4444;" title="Kırmızı"></div>
+                    <div class="color-swatch" data-color="#f59e0b" style="background-color: #f59e0b;" title="Amber"></div>
+                    <div class="color-swatch" data-color="#10b981" style="background-color: #10b981;" title="Zümrüt"></div>
+                    <div class="color-swatch" data-color="#14b8a6" style="background-color: #14b8a6;" title="Teal"></div>
+                    <div class="color-swatch" data-color="#06b6d4" style="background-color: #06b6d4;" title="Camgöbeği"></div>
+                    <div class="color-swatch" data-color="#84cc16" style="background-color: #84cc16;" title="Lime"></div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="saveSettingsBtn">Kaydet</button>
+                <button id="closeModalBtn" class="secondary-btn">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grup Yönetim Modalı -->
+    <div class="modal-overlay" id="groupAdminModal">
+        <div class="modal-card">
+            <h2 id="adminModalTitle">Grup Yönetimi</h2>
+            <div class="modal-field">
+                <label>6 Haneli Katılım Kodu:</label>
+                <div style="background-color: var(--bg-main); border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; font-weight: bold; color: var(--accent); font-size: 16px; letter-spacing: 2px;" id="adminModalCode">------</div>
+            </div>
+            <div class="modal-field">
+                <label>Grup Üyeleri:</label>
+                <ul class="social-list" id="adminMembersList" style="max-height: 150px;"></ul>
+            </div>
+            <div class="modal-actions">
+                <button id="closeGroupAdminModal" class="secondary-btn">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // MERKEZİ GEMINI API ANAHTARI
+        const CENTRAL_GEMINI_API_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN";
+
+        // UYGULAMA SÜRÜMÜ
+        const APP_VERSION = "v1.0.2";
+
+        // PWA Service Worker & Dinamik Güncelleme Kontrolü
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'super-student-${APP_VERSION}';
+                self.addEventListener('install', (e) => { self.skipWaiting(); });
+                self.addEventListener('activate', (e) => {
+                    e.waitUntil(
+                        caches.keys().then((keys) => {
+                            return Promise.all(keys.map((key) => { if (key !== CACHE_NAME) return caches.delete(key); }));
+                        }).then(() => self.clients.claim())
+                    );
+                });
+                self.addEventListener('fetch', (e) => {
+                    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'text/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            
+            navigator.serviceWorker.register(swUrl).then(reg => {
+                reg.update();
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            const banner = document.getElementById('updateBanner');
+                            if (banner) banner.style.display = 'flex';
+                        }
+                    });
+                });
+            }).catch(err => {});
+        }
+
+        // DOM Yüklendikten Sonra Çalışacak Ana Mantık
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Sekme Değiştirme Fonksiyonu
+            window.switchView = function(viewId) {
+                document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+                document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+                
+                const targetView = document.getElementById(viewId);
+                if (targetView) targetView.classList.add('active');
+
+                if (viewId === 'notesView') {
+                    document.getElementById('tabBtnNotes').classList.add('active');
+                } else if (viewId === 'quizStudioView') {
+                    document.getElementById('tabBtnStudio').classList.add('active');
+                    populateStudioSources();
+                } else if (viewId === 'scheduleView') {
+                    document.getElementById('tabBtnSchedule').classList.add('active');
+                    renderSchedules();
+                }
+            };
+
+            // Kesin ve Kalıcı Cihaz ID Yönetimi
+            let permanentId = localStorage.getItem('studentPermanentId');
+            if (!permanentId) {
+                permanentId = 'STU-' + Math.floor(1000 + Math.random() * 9000);
+                localStorage.setItem('studentPermanentId', permanentId);
+            }
+
+            let userProfile = JSON.parse(localStorage.getItem('studentProfile')) || {
+                name: 'Öğrenci',
+                accentColor: '#38bdf8'
+            };
+            userProfile.id = permanentId;
+            localStorage.setItem('studentProfile', JSON.stringify(userProfile));
+
+            let friends = JSON.parse(localStorage.getItem('studentFriends')) || [];
+            let friendRequests = JSON.parse(localStorage.getItem('studentFriendRequests')) || [];
+            let schedules = JSON.parse(localStorage.getItem('studentSchedules')) || [];
+
+            // Grup Veri Yapısı
+            let groups = JSON.parse(localStorage.getItem('studentGroupsObj')) || [
+                { name: 'Genel Çalışma Odası', code: '100001', adminId: 'SYSTEM', members: [] },
+                { name: 'YKS Tayfa 2026', code: '202602', adminId: 'SYSTEM', members: [] },
+                { name: 'Web Tasarım Grubu', code: '300003', adminId: 'SYSTEM', members: [] }
+            ];
+            let currentRoom = 'Genel Çalışma Odası';
+            
+            let studyStats = JSON.parse(localStorage.getItem('studentStudyStats')) || {
+                dailyMinutes: 0,
+                weeklyMinutes: 0,
+                lastActiveDate: new Date().toLocaleDateString()
+            };
+
+            let messages = [];
+            let notes = JSON.parse(localStorage.getItem('superStudentNotes')) || [];
+
+            async function syncDataToCloud() {
+                if (!window.db) return;
+                try {
+                    const cloudPayload = {
+                        profile: userProfile,
+                        notes: notes,
+                        friends: friends,
+                        friendRequests: friendRequests,
+                        studyStats: studyStats,
+                        schedules: schedules,
+                        updatedAt: new Date().toISOString()
+                    };
+                    await window.fbModules.setDoc(
+                        window.fbModules.doc(window.db, "ogrenciVerileri", userProfile.id), 
+                        cloudPayload, 
+                        { merge: true }
+                    );
+                    const cloudEl = document.getElementById('cloudStatusText');
+                    if(cloudEl) cloudEl.textContent = "☁️ Bulut Aktif";
+                } catch (e) {
+                    const cloudEl = document.getElementById('cloudStatusText');
+                    if(cloudEl) cloudEl.textContent = "📴 Çevrimdışı Mod (Yerel)";
+                }
+            }
+
+            let isListening = false;
+            let chatUnsubscribe = null;
+
+            function initGlobalGroupsListener() {
+                if (!window.db) return;
+                const globalGroupsRef = window.fbModules.doc(window.db, "settings", "globalGroupsObj");
+                window.fbModules.onSnapshot(globalGroupsRef, (snap) => {
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        if (data.list && Array.isArray(data.list)) {
+                            groups = data.list;
+                            localStorage.setItem('studentGroupsObj', JSON.stringify(groups));
+                            renderGroups();
+                        }
+                    } else {
+                        window.fbModules.setDoc(globalGroupsRef, { list: groups }, { merge: true });
+                    }
+                });
+            }
+
+            async function syncGlobalGroups() {
+                localStorage.setItem('studentGroupsObj', JSON.stringify(groups));
+                if (window.db) {
+                    try {
+                        await window.fbModules.setDoc(
+                            window.fbModules.doc(window.db, "settings", "globalGroupsObj"), 
+                            { list: groups }, 
+                            { merge: true }
+                        );
+                    } catch(e) {}
+                }
+            }
+
+            function initRealtimeListener() {
+                if (!window.db || isListening) return;
+                isListening = true;
+                try {
+                    const docRef = window.fbModules.doc(window.db, "ogrenciVerileri", userProfile.id);
+                    window.fbModules.onSnapshot(docRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            if (data.notes) notes = data.notes;
+                            if (data.friends) friends = data.friends;
+                            if (data.friendRequests) friendRequests = data.friendRequests;
+                            if (data.studyStats) studyStats = data.studyStats;
+                            if (data.schedules) schedules = data.schedules;
+                            
+                            if (data.profile) {
+                                userProfile.name = data.profile.name || userProfile.name;
+                                userProfile.accentColor = data.profile.accentColor || userProfile.accentColor;
+                                userProfile.id = permanentId;
+                                localStorage.setItem('studentProfile', JSON.stringify(userProfile));
+                            }
+                            
+                            localStorage.setItem('superStudentNotes', JSON.stringify(notes));
+                            localStorage.setItem('studentSchedules', JSON.stringify(schedules));
+                            updateHeaderProfile();
+                            if (userProfile.accentColor) applyAccentColor(userProfile.accentColor);
+                            renderNotes();
+                            renderFriends();
+                            renderFriendRequests();
+                            renderLeaderboard();
+                            renderSchedules();
+                        }
+                    }, (error) => {});
+                    initGlobalGroupsListener();
+                    setupChatListener(currentRoom);
+                } catch (e) {}
+            }
+
+            function setupChatListener(roomName) {
+                if (!window.db) return;
+                if (chatUnsubscribe) chatUnsubscribe();
+                try {
+                    const chatDocRef = window.fbModules.doc(window.db, "chatRooms", roomName);
+                    chatUnsubscribe = window.fbModules.onSnapshot(chatDocRef, (snap) => {
+                        if (snap.exists()) {
+                            messages = snap.data().messages || [];
+                        } else {
+                            messages = [{ id: Date.now(), room: roomName, senderId: 'SYSTEM', senderName: 'Sistem', text: ` #${roomName} odasına hoş geldiniz!` }];
+                        }
+                        renderMessages();
+                    }, (err) => {});
+                } catch(e) {}
+            }
+
+            window.initCloudSync = function() { initRealtimeListener(); };
+
+            function applyAccentColor(colorHex) {
+                document.documentElement.style.setProperty('--accent', colorHex);
+                document.documentElement.style.setProperty('--accent-hover', adjustColorBrightness(colorHex, -20));
+            }
+
+            function adjustColorBrightness(hex, amount) {
+                let useHash = false;
+                if (hex[0] === '#') { hex = hex.slice(1); useHash = true; }
+                let num = parseInt(hex, 16);
+                let r = (num >> 16) + amount; r = r < 0 ? 0 : r > 255 ? 255 : r;
+                let g = ((num >> 8) & 0x00FF) + amount; g = g < 0 ? 0 : g > 255 ? 255 : g;
+                let b = (num & 0x0000FF) + amount; b = b < 0 ? 0 : b > 255 ? 255 : b;
+                return (useHash ? '#' : '') + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+            }
+
+            const noteTitle = document.getElementById('noteTitle');
+            const noteContent = document.getElementById('noteContent');
+            const noteCategory = document.getElementById('noteCategory');
+            const notePriority = document.getElementById('notePriority');
+            const noteImage = document.getElementById('noteImage');
+            const addBtn = document.getElementById('addBtn');
+            const micBtn = document.getElementById('micBtn');
+            const notesGrid = document.getElementById('notesGrid');
+            const searchInput = document.getElementById('searchInput');
+            const filterCategory = document.getElementById('filterCategory');
+            const exportBtn = document.getElementById('exportBtn');
+
+            let currentFilePayload = { name: '', data: '', type: '' };
+
+            if (noteImage) {
+                noteImage.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        currentFilePayload.name = file.name;
+                        currentFilePayload.type = file.type;
+                        const reader = new FileReader();
+                        reader.onload = function(uploadEvent) {
+                            currentFilePayload.data = uploadEvent.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'tr-TR';
+                recognition.continuous = false;
+
+                if (micBtn) {
+                    micBtn.addEventListener('click', () => {
+                        recognition.start();
+                        micBtn.classList.add('listening');
+                        micBtn.textContent = 'Dinleniyor...';
+                    });
+                }
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    if(noteContent) noteContent.value += (noteContent.value ? ' ' : '') + transcript;
+                    resetMicButton();
+                };
+                recognition.onerror = () => { resetMicButton(); };
+                recognition.onend = () => { resetMicButton(); };
+
+                function resetMicButton() {
+                    if (micBtn) {
+                        micBtn.classList.remove('listening');
+                        micBtn.textContent = '🎙️ Sesle Yaz';
+                    }
+                }
+            } else if (micBtn) {
+                micBtn.style.display = 'none';
+            }
+
+            // Telefon Bildirim Sesi (Zil / Çan Efekti)
+            function playPhoneNotificationSound() {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) return;
+                    const audioCtx = new AudioContext();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                    // Çift tonlu telefon bildirim sesi simülasyonu
+                    const playTone = (freq, timeOffset, duration) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + timeOffset);
+                        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + timeOffset);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + timeOffset + duration);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(audioCtx.currentTime + timeOffset);
+                        osc.stop(audioCtx.currentTime + timeOffset + duration);
+                    };
+
+                    playTone(880, 0, 0.15); // La
+                    playTone(1318.51, 0.18, 0.3); // Mi
+                } catch (e) {}
+            }
+
+            // DERS PROGRAMI VE BİLDİRİM KONTROL SİSTEMİ
+            const schClassName = document.getElementById('schClassName');
+            const schDay = document.getElementById('schDay');
+            const schTime = document.getElementById('schTime');
+            const schNotifyBefore = document.getElementById('schNotifyBefore');
+            const addScheduleBtn = document.getElementById('addScheduleBtn');
+            const scheduleList = document.getElementById('scheduleList');
+
+            if (addScheduleBtn) {
+                addScheduleBtn.addEventListener('click', () => {
+                    const nameVal = schClassName.value.trim();
+                    if (!nameVal) { alert('Lütfen ders adı girin!'); return; }
+
+                    const newSch = {
+                        id: Date.now(),
+                        name: nameVal,
+                        day: schDay.value,
+                        time: schTime.value,
+                        notifyBefore: parseInt(schNotifyBefore.value) || 10
+                    };
+
+                    schedules.push(newSch);
+                    localStorage.setItem('studentSchedules', JSON.stringify(schedules));
+                    syncDataToCloud();
+
+                    schClassName.value = '';
+                    renderSchedules();
+                    alert('Ders başarıyla programa eklendi!');
+                });
+            }
+
+            window.deleteSchedule = function(id) {
+                schedules = schedules.filter(s => s.id !== id);
+                localStorage.setItem('studentSchedules', JSON.stringify(schedules));
+                syncDataToCloud();
+                renderSchedules();
+            };
+
+            function renderSchedules() {
+                if(!scheduleList) return;
+                scheduleList.innerHTML = '';
+                if (schedules.length === 0) {
+                    scheduleList.innerHTML = '<li style="color:var(--text-muted); font-size:12px; text-align:center;">Henüz eklenmiş ders bulunmuyor.</li>';
+                    return;
+                }
+
+                // Gün sıralaması için yardımcı
+                const dayOrder = { 'Pazartesi': 1, 'Salı': 2, 'Çarşamba': 3, 'Perşembe': 4, 'Cuma': 5, 'Cumartesi': 6, 'Pazar': 7 };
+                schedules.sort((a, b) => (dayOrder[a.day] || 8) - (dayOrder[b.day] || 8) || a.time.localeCompare(b.time));
+
+                schedules.forEach(s => {
+                    const li = document.createElement('li');
+                    li.className = 'social-list-item';
+                    li.innerHTML = `
+                        <div>
+                            📖 <b>${escapeHtml(s.name)}</b><br>
+                            <span style="font-size:10px; color:var(--accent);">🗓️ ${s.day} | ⏰ ${s.time} (🔔 ${s.notifyBefore} dk önce)</span>
+                        </div>
+                        <button class="delete-btn" onclick="deleteSchedule(${s.id})" style="padding:4px 8px; font-size:11px;">Sil</button>
+                    `;
+                    scheduleList.appendChild(li);
+                });
+            }
+
+            // Arka Planda Ders Saatini ve Bildirimleri Kontrol Eden Zamanlayıcı
+            let lastAlertMinute = "";
+            setInterval(() => {
+                if (schedules.length === 0) return;
+
+                const now = new Date();
+                const daysMap = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+                const currentDayName = daysMap[now.getDay()];
+                const currentHours = String(now.getHours()).padStart(2, '0');
+                const currentMinutes = String(now.getMinutes()).padStart(2, '0');
+                const currentTimeStr = `${currentHours}:${currentMinutes}`;
+                
+                // Aynı dakika içinde mükerrer bildirim çalmaması için kontrol
+                const currentMinuteKey = `${currentDayName}-${currentTimeStr}`;
+                if (lastAlertMinute === currentMinuteKey) return;
+
+                schedules.forEach(s => {
+                    if (s.day === currentDayName) {
+                        // Ders saatini dakika cinsine çevir
+                        const [cHour, cMin] = s.time.split(':').map(Number);
+                        const classTotalMins = cHour * 60 + cMin;
+                        const nowTotalMins = now.getHours() * 60 + now.getMinutes();
+
+                        // Bildirim yapılması gereken hedef dakika
+                        const targetAlertMins = classTotalMins - s.notifyBefore;
+
+                        if (nowTotalMins === targetAlertMins) {
+                            lastAlertMinute = currentMinuteKey;
+                            playPhoneNotificationSound();
+                            alert(`🔔 YAKLAŞAN DERS UYARISI!\n\n"${s.name}" dersinizin başlamasına ${s.notifyBefore} dakika kaldı! (${s.time})`);
+                        }
+                    }
+                });
+            }, 15000); // Her 15 saniyede bir kontrol et
+
+            // Pomodoro Mantığı
+            const pomoMinutesInput = document.getElementById('pomoMinutesInput');
+            const pomoTimerDisplay = document.getElementById('pomodoroTimer');
+            const pomoStartBtn = document.getElementById('pomoStart');
+            const pomoResetBtn = document.getElementById('pomoReset');
+
+            let pomoInterval = null;
+            let targetEndTime = localStorage.getItem('studentPomoTargetEndTime') ? parseInt(localStorage.getItem('studentPomoTargetEndTime')) : null;
+            let initialDurationMinutes = parseInt(pomoMinutesInput.value) || 25;
+
+            function playBeepSound() {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioContext) return;
+                    const audioCtx = new AudioContext();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.6);
+                } catch (e) {}
+            }
+
+            function updatePomoDisplayFromTarget() {
+                if (!targetEndTime) {
+                    const val = parseInt(pomoMinutesInput.value) || 25;
+                    if(pomoTimerDisplay) pomoTimerDisplay.textContent = `${String(val).padStart(2, '0')}:00`;
+                    return;
+                }
+                const remainingSeconds = Math.floor((targetEndTime - Date.now()) / 1000);
+                if (remainingSeconds <= 0) {
+                    clearInterval(pomoInterval);
+                    pomoInterval = null;
+                    targetEndTime = null;
+                    localStorage.removeItem('studentPomoTargetEndTime');
+                    if(pomoStartBtn) pomoStartBtn.textContent = 'Başlat';
+                    if(pomoMinutesInput) pomoMinutesInput.disabled = false;
+                    if(pomoTimerDisplay) pomoTimerDisplay.textContent = '00:00';
+                    addStudyTime(initialDurationMinutes);
+                    playBeepSound();
+                } else {
+                    const minutes = Math.floor(remainingSeconds / 60);
+                    const seconds = remainingSeconds % 60;
+                    if(pomoTimerDisplay) pomoTimerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                }
+            }
+
+            function addStudyTime(mins) {
+                const today = new Date().toLocaleDateString();
+                if (studyStats.lastActiveDate !== today) {
+                    studyStats.dailyMinutes = 0;
+                    studyStats.lastActiveDate = today;
+                }
+                studyStats.dailyMinutes += mins;
+                studyStats.weeklyMinutes += mins;
+                localStorage.setItem('studentStudyStats', JSON.stringify(studyStats));
+                syncDataToCloud();
+                renderLeaderboard();
+            }
+
+            if (targetEndTime && targetEndTime > Date.now()) {
+                if(pomoStartBtn) pomoStartBtn.textContent = 'Durdur';
+                if(pomoMinutesInput) pomoMinutesInput.disabled = true;
+                pomoInterval = setInterval(updatePomoDisplayFromTarget, 1000);
+            } else {
+                updatePomoDisplayFromTarget();
+            }
+
+            if (pomoStartBtn) {
+                pomoStartBtn.addEventListener('click', () => {
+                    if (pomoInterval) {
+                        clearInterval(pomoInterval);
+                        pomoInterval = null;
+                        targetEndTime = null;
+                        localStorage.removeItem('studentPomoTargetEndTime');
+                        pomoStartBtn.textContent = 'Başlat';
+                        pomoMinutesInput.disabled = false;
+                        updatePomoDisplayFromTarget();
+                    } else {
+                        initialDurationMinutes = parseInt(pomoMinutesInput.value) || 25;
+                        targetEndTime = Date.now() + (initialDurationMinutes * 60 * 1000);
+                        localStorage.setItem('studentPomoTargetEndTime', targetEndTime);
+                        pomoStartBtn.textContent = 'Durdur';
+                        pomoMinutesInput.disabled = true;
+                        pomoInterval = setInterval(updatePomoDisplayFromTarget, 1000);
+                    }
+                });
+            }
+
+            if (pomoResetBtn) {
+                pomoResetBtn.addEventListener('click', () => {
+                    clearInterval(pomoInterval);
+                    pomoInterval = null;
+                    targetEndTime = null;
+                    localStorage.removeItem('studentPomoTargetEndTime');
+                    pomoStartBtn.textContent = 'Başlat';
+                    pomoMinutesInput.disabled = false;
+                    updatePomoDisplayFromTarget();
+                });
+            }
+
+            function renderLeaderboard() {
+                const leaderboardList = document.getElementById('leaderboardList');
+                if (!leaderboardList) return;
+                leaderboardList.innerHTML = '';
+                let allUsers = [{ 
+                    name: userProfile.name + " (Sen)", 
+                    daily: studyStats.dailyMinutes || 0, 
+                    weekly: studyStats.weeklyMinutes || 0 
+                }];
+                friends.forEach(f => { 
+                    allUsers.push({ 
+                        name: f.name, 
+                        daily: f.dailyMinutes || 0, 
+                        weekly: f.weeklyMinutes || 0 
+                    }); 
+                });
+                allUsers.sort((a, b) => b.daily - a.daily);
+                allUsers.forEach((u, idx) => {
+                    const li = document.createElement('li');
+                    li.className = 'social-list-item';
+                    li.innerHTML = `<span>🥇 ${idx+1}. <b>${escapeHtml(u.name)}</b></span><span style="font-size:10px; color:var(--accent);">Gün: ${u.daily}dk | Hafta: ${u.weekly}dk</span>`;
+                    leaderboardList.appendChild(li);
+                });
+            }
+
+            function renderNotes() {
+                if(!notesGrid) return;
+                notesGrid.innerHTML = '';
+                const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+                const selectedCat = filterCategory ? filterCategory.value : 'Tümü';
+
+                if (notes.length === 0) {
+                    notesGrid.innerHTML = '<p style="text-align: center; color: var(--text-muted); font-size: 13px;">Hiç not bulunamadı.</p>';
+                    return;
+                }
+
+                notes.forEach((note, originalIndex) => {
+                    const matchesSearch = note.title.toLowerCase().includes(searchTerm) || note.content.toLowerCase().includes(searchTerm);
+                    const matchesCategory = selectedCat === 'Tümü' || note.category === selectedCat;
+                    if (!matchesSearch || !matchesCategory) return;
+
+                    const card = document.createElement('div');
+                    card.className = `note-card priority-${note.priority}`;
+                    
+                    let mediaHtml = '';
+                    if (note.file && note.file.data) {
+                        if (note.file.type && note.file.type.startsWith('image/')) {
+                            mediaHtml = `<img src="${note.file.data}" class="note-img">`;
+                        } else {
+                            mediaHtml = `<div style="font-size:12px; color:var(--accent); margin-bottom:8px;">📎 Ekli Dosya/PDF: <b>${escapeHtml(note.file.name)}</b></div>`;
+                        }
+                    }
+
+                    card.innerHTML = `
+                        <div class="note-header">
+                            <span class="note-title ${note.completed ? 'completed' : ''}">${escapeHtml(note.title)}</span>
+                            <div class="badges">
+                                <span class="badge">${note.category}</span>
+                                <span class="badge">${note.priority}</span>
+                            </div>
+                        </div>
+                        <label class="checkbox-container">
+                            <input type="checkbox" ${note.completed ? 'checked' : ''} onchange="toggleComplete(${originalIndex})">
+                            <span>Görevi Tamamla</span>
+                        </label>
+                        <div class="note-content ${note.completed ? 'completed' : ''}">${escapeHtml(note.content)}</div>
+                        ${mediaHtml}
+                        <div class="note-footer">
+                            <span>📅 ${note.date}</span>
+                            <button class="delete-btn" onclick="deleteNote(${originalIndex})">Sil</button>
+                        </div>
+                    `;
+                    notesGrid.appendChild(card);
+                });
+            }
+
+            function escapeHtml(text) {
+                return (text || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            }
+
+            function addNote() {
+                const titleVal = noteTitle.value.trim();
+                const contentVal = noteContent.value.trim();
+                if (titleVal === '' && contentVal === '' && !currentFilePayload.name) {
+                    alert('Lütfen başlık, içerik veya dosya ekleyin!');
+                    return;
+                }
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('tr-TR') + ' ' + now.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
+
+                const newNote = {
+                    title: titleVal || (currentFilePayload.name ? currentFilePayload.name : 'Başlıksız Not'),
+                    content: contentVal,
+                    category: noteCategory.value,
+                    priority: notePriority.value,
+                    file: currentFilePayload.name ? { ...currentFilePayload } : null,
+                    completed: false,
+                    date: dateStr
+                };
+
+                notes.unshift(newNote);
+                localStorage.setItem('superStudentNotes', JSON.stringify(notes));
+                syncDataToCloud();
+
+                noteTitle.value = '';
+                noteContent.value = '';
+                if(noteImage) noteImage.value = '';
+                currentFilePayload = { name: '', data: '', type: '' };
+                renderNotes();
+            }
+
+            window.toggleComplete = function(index) {
+                notes[index].completed = !notes[index].completed;
+                localStorage.setItem('superStudentNotes', JSON.stringify(notes));
+                syncDataToCloud();
+                renderNotes();
+            };
+
+            window.deleteNote = function(index) {
+                notes.splice(index, 1);
+                localStorage.setItem('superStudentNotes', JSON.stringify(notes));
+                syncDataToCloud();
+                renderNotes();
+            };
+
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => {
+                    if (notes.length === 0) { alert('Not bulunmuyor.'); return; }
+                    let textContent = "=== SÜPER ÖĞRENCİ NOTLARIM ===\n\n";
+                    notes.forEach((n, i) => { textContent += `${i+1}. ${n.title}\n${n.content}\n---------------------------------\n\n`; });
+                    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = 'ders_notlarim.txt'; a.click();
+                    URL.revokeObjectURL(url);
+                });
+            }
+
+            if(addBtn) addBtn.addEventListener('click', addNote);
+            if(searchInput) searchInput.addEventListener('input', renderNotes);
+            if(filterCategory) filterCategory.addEventListener('change', renderNotes);
+
+            // Soru & Test Stüdyosu
+            const studioSourceSelect = document.getElementById('studioSourceSelect');
+            const studioDirectFile = document.getElementById('studioDirectFile');
+            const studioGradeSelect = document.getElementById('studioGradeSelect');
+            const studioTypeSelect = document.getElementById('studioTypeSelect');
+            const studioQuestionCount = document.getElementById('studioQuestionCount');
+            const studioDifficulty = document.getElementById('studioDifficulty');
+            const generateTestSheetBtn = document.getElementById('generateTestSheetBtn');
+            const studioDisplayBox = document.getElementById('studioDisplayBox');
+
+            function populateStudioSources() {
+                if(!studioSourceSelect) return;
+                studioSourceSelect.innerHTML = '<option value="">-- Tüm Notlar / Havuz (Genel) --</option>';
+                notes.forEach((n, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = idx;
+                    let suffix = n.file && n.file.name ? ` [📎 ${n.file.name}]` : '';
+                    opt.textContent = `${n.category}: ${n.title}${suffix}`;
+                    studioSourceSelect.appendChild(opt);
+                });
+            }
+
+            if (generateTestSheetBtn) {
+                generateTestSheetBtn.addEventListener('click', async () => {
+                    const sourceIdx = studioSourceSelect.value;
+                    const directFile = studioDirectFile.files[0];
+                    const grade = studioGradeSelect.value;
+                    const type = studioTypeSelect.value;
+                    const count = parseInt(studioQuestionCount.value) || 10;
+                    const diff = studioDifficulty.value;
+
+                    let sourceText = "";
+                    let sourceTitle = "Genel Not Havuzu";
+
+                    if (directFile) {
+                        sourceTitle = directFile.name;
+                        sourceText = `[Doğrudan Yüklenen Dosya: ${directFile.name} (${directFile.type || 'Belge'})]`;
+                    } else if (sourceIdx !== "") {
+                        const note = notes[sourceIdx];
+                        sourceText = (note.content || "") + (note.file && note.file.name ? ` [Dosya/PDF: ${note.file.name}]` : "");
+                        sourceTitle = note.title;
+                    } else {
+                        sourceText = notes.map(n => n.title + ": " + n.content).join("\n");
+                    }
+
+                    if (!sourceText.trim()) {
+                        alert('Lütfen bir kaynak seçin ya da doğrudan bir dosya / PDF / fotoğraf yükleyin!');
+                        return;
+                    }
+
+                    studioDisplayBox.innerHTML = `<div class="test-sheet-card">⏳ Seçilen kaynak taranıyor, ${grade} kademesine uygun ${count} adet ${diff} seviye soru hazırlanıyor...</div>`;
+
+                    const activeApiKey = CENTRAL_GEMINI_API_KEY;
+
+                    if (activeApiKey && activeApiKey !== "BURAYA_API_ANAHTARINIZI_YAZIN" && activeApiKey.trim() !== '') {
+                        try {
+                            let promptQuery = type === 'test' 
+                                ? `Aşağıdaki metne dayanarak ${grade} kademesine uygun, ${diff} zorlukta ${count} adet çoktan seçmeli test sorusu hazırla:\n\n${sourceText}`
+                                : `Aşağıdaki metne dayanarak ${grade} kademesine uygun, ${diff} zorlukta ${count} adet bilgi/klasik soru hazırla:\n\n${sourceText}`;
+
+                            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeApiKey.trim()}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ contents: [{ parts: [{ text: promptQuery }] }] })
+                            });
+                            const data = await response.json();
+                            
+                            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                                const aiReply = data.candidates[0].content.parts[0].text;
+                                studioDisplayBox.innerHTML = `
+                                    <div class="test-sheet-card" style="border-style: solid;">
+                                        <h3>📄 Test Sayfası: ${escapeHtml(sourceTitle)}</h3>
+                                        <div style="font-size: 11px; color: var(--accent); margin-bottom: 10px;">Kademe: ${grade} | Zorluk: ${diff} | Adet: ${count}</div>
+                                        <hr style="border-color: var(--border-color); margin-bottom: 10px;">
+                                        <div style="font-size: 13px; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(aiReply)}</div>
+                                    </div>
+                                `;
+                                return;
+                            }
+                        } catch (err) {}
+                    }
+
+                    setTimeout(() => {
+                        let htmlContent = `
+                            <div class="test-sheet-card" style="border-style: solid; margin-bottom: 15px;">
+                                <h3 style="color: var(--accent); margin-top:0;">📄 Test Sayfası: ${escapeHtml(sourceTitle)}</h3>
+                                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 5px;">Kategori: <b>${grade}</b> | Zorluk: <b>${diff}</b> | Soru Tipi: <b>${type === 'test' ? 'Çoktan Seçmeli' : 'Bilgi/Klasik'}</b></div>
+                                <div style="font-size: 11px; color: var(--success);">✔ Dosya veya kaynak başarıyla analiz edildi.</div>
+                            </div>
+                        `;
+
+                        for (let i = 1; i <= count; i++) {
+                            if (type === 'test') {
+                                htmlContent += `
+                                    <div class="test-sheet-card">
+                                        <b>Soru ${i} (${diff}):</b> "${sourceTitle}" belgesine dayanarak aşağıdakilerden hangisi doğrudur?
+                                        <div class="test-option-item">A) Doğru analiz verisi: ${sourceText.substring(0, 30)}...</div>
+                                        <div class="test-option-item">B) Alternatif çeldirici şık.</div>
+                                        <div class="test-option-item">C) Konu dışı seçenek.</div>
+                                        <div class="test-option-item">D) Yanıltıcı çeldirici.</div>
+                                    </div>
+                                `;
+                            } else {
+                                htmlContent += `
+                                    <div class="test-sheet-card">
+                                        <b>Soru ${i} [${diff} Klasik Soru]:</b> "${sourceTitle}" içeriğindeki temel esasları açıklayınız.<br>
+                                        <div style="margin-top: 8px; font-size: 12px; color: var(--accent);">💡 <i>Cevap İpucu: Yüklenen dokümandaki anahtar kavramlar dikkate alınmalıdır.</i></div>
+                                    </div>
+                                `;
+                            }
+                        }
+
+                        studioDisplayBox.innerHTML = htmlContent;
+                    }, 600);
+                });
+            }
+
+            // Profil & Ayarlar Modalı
+            const headerUserName = document.getElementById('headerUserName');
+            const headerAvatarText = document.getElementById('headerAvatarText');
+            const openSettingsModalBtn = document.getElementById('openSettingsModalBtn');
+            const settingsModal = document.getElementById('settingsModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+            const modalNameInput = document.getElementById('modalNameInput');
+            const modalDisplayId = document.getElementById('modalDisplayId');
+            const colorPresets = document.getElementById('colorPresets');
+
+            let tempSelectedColor = userProfile.accentColor || '#38bdf8';
+            if (userProfile.accentColor) applyAccentColor(userProfile.accentColor);
+
+            function updateHeaderProfile() {
+                if(headerUserName) headerUserName.textContent = userProfile.name;
+                if(headerAvatarText) headerAvatarText.textContent = userProfile.name.charAt(0).toUpperCase();
+            }
+            updateHeaderProfile();
+
+            function updateSwatchActiveState(color) {
+                if(!colorPresets) return;
+                colorPresets.querySelectorAll('.color-swatch').forEach(s => {
+                    if (s.getAttribute('data-color').toLowerCase() === color.toLowerCase()) s.classList.add('active');
+                    else s.classList.remove('active');
+                });
+            }
+
+            if (openSettingsModalBtn) {
+                openSettingsModalBtn.addEventListener('click', () => {
+                    if(modalNameInput) modalNameInput.value = userProfile.name;
+                    if(modalDisplayId) modalDisplayId.textContent = userProfile.id;
+                    tempSelectedColor = userProfile.accentColor || '#38bdf8';
+                    updateSwatchActiveState(tempSelectedColor);
+                    if(settingsModal) settingsModal.style.display = 'flex';
+                });
+            }
+
+            if (colorPresets) {
+                colorPresets.addEventListener('click', (e) => {
+                    const swatch = e.target.closest('.color-swatch');
+                    if (!swatch) return;
+                    tempSelectedColor = swatch.getAttribute('data-color');
+                    updateSwatchActiveState(tempSelectedColor);
+                });
+            }
+
+            if(closeModalBtn) closeModalBtn.addEventListener('click', () => { if(settingsModal) settingsModal.style.display = 'none'; });
+
+            if (saveSettingsBtn) {
+                saveSettingsBtn.addEventListener('click', () => {
+                    const newName = modalNameInput.value.trim();
+                    if (newName) {
+                        userProfile.name = newName;
+                        userProfile.accentColor = tempSelectedColor;
+                        userProfile.id = permanentId;
+                        localStorage.setItem('studentProfile', JSON.stringify(userProfile));
+                        syncDataToCloud();
+                        updateHeaderProfile();
+                        applyAccentColor(tempSelectedColor);
+                        if(settingsModal) settingsModal.style.display = 'none';
+                        initRealtimeListener();
+                    } else {
+                        alert('İsim boş bırakılamaz!');
+                    }
+                });
+            }
+
+            // ÖZEL ARKADAŞLAR MODALI
+            const openFriendsModalBtn = document.getElementById('openFriendsModalBtn');
+            const friendsModal = document.getElementById('friendsModal');
+            const closeFriendsModalBtn = document.getElementById('closeFriendsModalBtn');
+            const friendIdInput = document.getElementById('friendIdInput');
+            const addFriendBtn = document.getElementById('addFriendBtn');
+            const friendList = document.getElementById('friendList');
+            const friendRequestsList = document.getElementById('friendRequestsList');
+
+            if (openFriendsModalBtn) {
+                openFriendsModalBtn.addEventListener('click', () => {
+                    renderFriends();
+                    renderFriendRequests();
+                    if(friendsModal) friendsModal.style.display = 'flex';
+                });
+            }
+
+            if (closeFriendsModalBtn) {
+                closeFriendsModalBtn.addEventListener('click', () => {
+                    if(friendsModal) friendsModal.style.display = 'none';
+                });
+            }
+
+            window.addEventListener('click', (e) => {
+                if (e.target === settingsModal) settingsModal.style.display = 'none';
+                if (e.target === friendsModal) friendsModal.style.display = 'none';
+                if (e.target === groupAdminModal) groupAdminModal.style.display = 'none';
+            });
+
+            function renderFriends() {
+                if(!friendList) return;
+                friendList.innerHTML = '';
+                if (friends.length === 0) { friendList.innerHTML = '<li style="color:var(--text-muted); font-size:11px; text-align:center;">Henüz eklenmiş arkadaşınız yok.</li>'; return; }
+                friends.forEach((f, idx) => {
+                    friendList.innerHTML += `<li class="social-list-item"><span>🟢 <b>${escapeHtml(f.name)}</b> <span style="font-size:10px; color:var(--text-muted);">[${f.id}]</span></span><button class="delete-btn" onclick="removeFriend(${idx})" style="padding:2px 5px; font-size:10px;">Sil</button></li>`;
+                });
+            }
+
+            function renderFriendRequests() {
+                if(!friendRequestsList) return;
+                friendRequestsList.innerHTML = '';
+                if (friendRequests.length === 0) { friendRequestsList.innerHTML = '<li style="color:var(--text-muted); font-size:11px; text-align:center;">Bekleyen istek yok.</li>'; return; }
+                friendRequests.forEach((req, idx) => {
+                    friendRequestsList.innerHTML += `<li class="social-list-item"><span style="font-size:11px;"><b>${escapeHtml(req.name)}</b></span><div><button onclick="acceptRequest(${idx})" style="background:var(--success); color:#fff; padding:2px 6px; font-size:10px; border:none; border-radius:4px;">Onayla</button></div></li>`;
+                });
+            }
+
+            if (addFriendBtn) {
+                addFriendBtn.addEventListener('click', async () => {
+                    let fId = friendIdInput.value.trim().toUpperCase();
+                    if (!fId) return;
+                    if (!fId.startsWith('STU-')) fId = 'STU-' + fId;
+                    if (fId === userProfile.id) { alert('Kendinizi ekleyemezsiniz.'); return; }
+                    if (!window.db) { alert('İnternet bağlantısı yok.'); return; }
+                    try {
+                        const targetDocRef = window.fbModules.doc(window.db, "ogrenciVerileri", fId);
+                        const targetSnap = await window.fbModules.getDoc(targetDocRef);
+                        if (!targetSnap.exists()) { alert('Bu ID ile kayıtlı bir öğrenci bulunamadı.'); return; }
+                        let targetReqs = targetSnap.data().friendRequests || [];
+                        targetReqs.push({ id: userProfile.id, name: userProfile.name });
+                        await window.fbModules.setDoc(targetDocRef, { friendRequests: targetReqs }, { merge: true });
+                        alert('Arkadaşlık isteği başarıyla gönderildi!');
+                        friendIdInput.value = '';
+                    } catch(e) { alert('İstek gönderilirken bir hata oluştu.'); }
+                });
+            }
+
+            window.acceptRequest = async function(idx) {
+                const req = friendRequests[idx];
+                friends.push({ name: req.name, id: req.id, dailyMinutes: 0, weeklyMinutes: 0 });
+                friendRequests.splice(idx, 1);
+                localStorage.setItem('studentFriends', JSON.stringify(friends));
+                localStorage.setItem('studentFriendRequests', JSON.stringify(friendRequests));
+                await syncDataToCloud();
+                renderFriends(); renderFriendRequests(); renderLeaderboard();
+            };
+
+            window.removeFriend = async function(idx) {
+                friends.splice(idx, 1);
+                localStorage.setItem('studentFriends', JSON.stringify(friends));
+                await syncDataToCloud();
+                renderFriends(); renderLeaderboard();
+            };
+
+            // Çalışma Grupları & Yönetici Mantığı
+            const groupInput = document.getElementById('groupInput');
+            const addGroupBtn = document.getElementById('addGroupBtn');
+            const joinGroupInput = document.getElementById('joinGroupInput');
+            const joinGroupBtn = document.getElementById('joinGroupBtn');
+            const groupList = document.getElementById('groupList');
+            const chatInput = document.getElementById('chatInput');
+            const sendChatBtn = document.getElementById('sendChatBtn');
+            const chatMessages = document.getElementById('chatMessages');
+            const currentChatRoom = document.getElementById('currentChatRoom');
+
+            const groupAdminModal = document.getElementById('groupAdminModal');
+            const adminModalTitle = document.getElementById('adminModalTitle');
+            const adminModalCode = document.getElementById('adminModalCode');
+            const adminMembersList = document.getElementById('adminMembersList');
+            const closeGroupAdminModal = document.getElementById('closeGroupAdminModal');
+
+            let activeAdminGroup = null;
+
+            function renderGroups() {
+                if(!groupList) return;
+                groupList.innerHTML = '';
+                groups.forEach(g => {
+                    let isCurrent = g.name === currentRoom ? ' ⭐' : '';
+                    let adminBadge = (g.adminId === userProfile.id) ? ' 👑(Yönetici)' : '';
+                    const li = document.createElement('li');
+                    li.className = 'social-list-item';
+                    li.innerHTML = `
+                        <span style="cursor:pointer; flex:1;" onclick="switchRoom('${escapeHtml(g.name)}')">
+                            🏫 <b>${escapeHtml(g.name)}</b> <span style="font-size:10px; color:var(--accent);">[Kod: ${g.code}]</span>${adminBadge}${isCurrent}
+                        </span>
+                        <button onclick="openGroupSettings('${g.code}')" style="background:var(--border-color); color:var(--text-main); font-size:10px; padding:2px 6px; border:none; border-radius:4px;">Yönet</button>
+                    `;
+                    groupList.appendChild(li);
+                });
+            }
+
+            window.switchRoom = function(roomName) {
+                currentRoom = roomName;
+                if(currentChatRoom) currentChatRoom.textContent = `Aktif Oda: ${roomName}`;
+                setupChatListener(roomName);
+                renderGroups();
+            };
+
+            if (addGroupBtn) {
+                addGroupBtn.addEventListener('click', async () => {
+                    const gName = groupInput.value.trim();
+                    if (!gName) { alert('Lütfen grup adı girin!'); return; }
+                    
+                    const code = Math.floor(100000 + Math.random() * 900000).toString();
+                    const newGroup = {
+                        name: gName,
+                        code: code,
+                        adminId: userProfile.id,
+                        members: [userProfile.id]
+                    };
+
+                    groups.push(newGroup);
+                    await syncGlobalGroups();
+                    groupInput.value = '';
+                    renderGroups();
+                    alert(`Grup başarıyla kuruldu!\n6 Haneli Katılım Kodunuz: ${code}`);
+                });
+            }
+
+            if (joinGroupBtn) {
+                joinGroupBtn.addEventListener('click', async () => {
+                    const code = joinGroupInput.value.trim();
+                    if (!code) { alert('Lütfen 6 haneli grup kodunu girin!'); return; }
+
+                    let targetGroup = groups.find(g => g.code === code);
+                    if (!targetGroup && window.db) {
+                        try {
+                            const snap = await window.fbModules.getDoc(window.fbModules.doc(window.db, "settings", "globalGroupsObj"));
+                            if (snap.exists()) {
+                                const list = snap.data().list || [];
+                                targetGroup = list.find(g => g.code === code);
+                                if (targetGroup && !groups.some(g => g.code === code)) {
+                                    groups.push(targetGroup);
+                                }
+                            }
+                        } catch(e) {}
+                    }
+
+                    if (!targetGroup) {
+                        alert('Bu kodla eşleşen aktif bir grup bulunamadı!');
+                        return;
+                    }
+
+                    if (!targetGroup.members.includes(userProfile.id)) {
+                        targetGroup.members.push(userProfile.id);
+                    }
+
+                    await syncGlobalGroups();
+                    currentRoom = targetGroup.name;
+                    if(currentChatRoom) currentChatRoom.textContent = `Aktif Oda: ${targetGroup.name}`;
+                    setupChatListener(targetGroup.name);
+                    joinGroupInput.value = '';
+                    renderGroups();
+                    alert(`"${targetGroup.name}" grubuna başarıyla katıldınız!`);
+                });
+            }
+
+            window.openGroupSettings = function(code) {
+                activeAdminGroup = groups.find(g => g.code === code);
+                if (!activeAdminGroup) return;
+
+                if(adminModalTitle) adminModalTitle.textContent = `Grup Yönetimi: ${activeAdminGroup.name}`;
+                if(adminModalCode) adminModalCode.textContent = activeAdminGroup.code;
+                renderAdminMembers();
+                if(groupAdminModal) groupAdminModal.style.display = 'flex';
+            };
+
+            function renderAdminMembers() {
+                if(!adminMembersList) return;
+                adminMembersList.innerHTML = '';
+                const isAdmin = activeAdminGroup.adminId === userProfile.id;
+                
+                activeAdminGroup.members.forEach((mId) => {
+                    let isCreator = mId === activeAdminGroup.adminId;
+                    let roleText = isCreator ? '👑 Yönetici' : 'Üye';
+                    let actionBtn = '';
+
+                    if (isAdmin && !isCreator && mId !== userProfile.id) {
+                        actionBtn = `<button onclick="kickMember('${mId}')" style="background:var(--danger); color:white; font-size:10px; padding:2px 6px; border:none; border-radius:4px;">At</button>`;
+                    }
+
+                    adminMembersList.innerHTML += `
+                        <li class="social-list-item">
+                            <span>👤 <b>${mId === userProfile.id ? userProfile.name + ' (Sen)' : mId}</b> <span style="font-size:10px; color:var(--accent);">[${roleText}]</span></span>
+                            ${actionBtn}
+                        </li>
+                    `;
+                });
+            }
+
+            window.kickMember = async function(memberId) {
+                if (!activeAdminGroup) return;
+                activeAdminGroup.members = activeAdminGroup.members.filter(id => id !== memberId);
+                await syncGlobalGroups();
+                renderAdminMembers();
+                renderGroups();
+            };
+
+            if(closeGroupAdminModal) closeGroupAdminModal.addEventListener('click', () => { if(groupAdminModal) groupAdminModal.style.display = 'none'; });
+
+            if (sendChatBtn) {
+                sendChatBtn.addEventListener('click', async () => {
+                    const text = chatInput.value.trim();
+                    if (!text) return;
+                    messages.push({ id: Date.now(), room: currentRoom, senderId: userProfile.id, senderName: userProfile.name, text: text, time: new Date().toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'}) });
+                    chatInput.value = '';
+                    if (window.db) {
+                        try { await window.fbModules.setDoc(window.fbModules.doc(window.db, "chatRooms", currentRoom), { messages: messages }, { merge: true }); } catch(e) {}
+                    }
+                    renderMessages();
+                });
+            }
+
+            function renderMessages() {
+                if(!chatMessages) return;
+                chatMessages.innerHTML = '';
+                messages.forEach(m => {
+                    chatMessages.innerHTML += `<div class="chat-msg"><b style="color:var(--accent);">${escapeHtml(m.senderName)}:</b> ${escapeHtml(m.text)}</div>`;
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            // Sayfa İlk Yüklenme
+            renderNotes(); 
+            renderGroups(); 
+            renderLeaderboard(); 
+            renderSchedules();
+            initRealtimeListener();
+        });
+    </script>
+</body>
+</html>
