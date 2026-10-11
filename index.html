@@ -69,7 +69,6 @@
             overflow-x: hidden;
         }
 
-        /* Yalnızca Yeni Sürüm Yayınlandığında Açılacak Dinamik Çubuk */
         #updateBanner {
             display: none;
             width: 100%;
@@ -439,7 +438,6 @@
             background-color: var(--danger-hover);
         }
 
-        /* Stüdyo & Ders Programı Tasarımı */
         .studio-container {
             display: flex;
             flex-direction: column;
@@ -700,7 +698,6 @@
 </head>
 <body>
 
-    <!-- Güncelleme Bildirim Çubuğu -->
     <div id="updateBanner">
         <span>🚀 Uygulamanın yeni bir sürümü (v1.0.2) yayınlandı!</span>
         <button onclick="window.location.reload()">Şimdi Güncelle</button>
@@ -709,11 +706,9 @@
     <header class="app-header">
         <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.2)</span></h1>
         <div class="header-actions">
-            <!-- Özel Arkadaşlar Penceresi Butonu -->
             <div class="action-badge-btn" id="openFriendsModalBtn" title="Arkadaşlarım">
                 <span>👥 Arkadaşlarım</span>
             </div>
-            <!-- Profil Ayarları Butonu -->
             <div class="action-badge-btn" id="openSettingsModalBtn" title="Profil Ayarları">
                 <span id="headerUserName">Öğrenci</span>
                 <div class="avatar-circle" id="headerAvatarText">Ö</div>
@@ -721,7 +716,6 @@
         </div>
     </header>
 
-    <!-- Üst Sekmeler -->
     <div class="nav-tabs">
         <div class="nav-tab-btn active" id="tabBtnNotes" onclick="switchView('notesView')">📚 Notlar & Pomodoro</div>
         <div class="nav-tab-btn" id="tabBtnStudio" onclick="switchView('quizStudioView')">📝 Soru & Test</div>
@@ -794,7 +788,6 @@
                 <div class="notes-grid" id="notesGrid"></div>
             </div>
 
-            <!-- Sağ Sütun: Liderlik, Gruplar ve Sohbet -->
             <div class="right-column">
                 <div class="social-section">
                     <h3>🏆 Çalışma Süreleri (Liderlik)</h3>
@@ -940,7 +933,16 @@
                         </select>
                     </div>
 
-                    <button id="addScheduleBtn" style="margin-top: 10px; background-color: var(--accent); color: var(--bg-main); font-weight: bold; padding: 12px;">➕ Dersi Programa Ekle</button>
+                    <button id="addScheduleBtn" style="margin-top: 5px; background-color: var(--accent); color: var(--bg-main); font-weight: bold; padding: 10px;">➕ Dersi Programa Ekle</button>
+                    
+                    <hr style="border-color: var(--border-color); margin: 10px 0;">
+
+                    <!-- TOPLU DERS PROGRAMI İÇE AKTARMA (JSON) -->
+                    <div class="modal-field">
+                        <label><b>📋 Toplu Ders Programı İçe Aktar (JSON):</b></label>
+                        <textarea id="bulkScheduleInput" placeholder='[{"name": "Matematik", "day": "Pazartesi", "time": "09:00", "notifyBefore": 10}]' style="height: 80px; font-family: monospace; font-size: 11px;"></textarea>
+                        <button id="bulkImportScheduleBtn" style="background-color: var(--success); color: white; font-weight: bold; padding: 8px; margin-top: 5px;">📥 Toplu Programı Yükle</button>
+                    </div>
                 </div>
 
                 <div class="studio-display-box" id="scheduleDisplayBox">
@@ -1042,13 +1044,9 @@
     </div>
 
     <script>
-        // MERKEZİ GEMINI API ANAHTARI
         const CENTRAL_GEMINI_API_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN";
-
-        // UYGULAMA SÜRÜMÜ
         const APP_VERSION = "v1.0.2";
 
-        // PWA Service Worker & Dinamik Güncelleme Kontrolü
         if ('serviceWorker' in navigator) {
             const swCode = `
                 const CACHE_NAME = 'super-student-${APP_VERSION}';
@@ -1081,10 +1079,8 @@
             }).catch(err => {});
         }
 
-        // DOM Yüklendikten Sonra Çalışacak Ana Mantık
         document.addEventListener('DOMContentLoaded', () => {
 
-            // Sekme Değiştirme Fonksiyonu
             window.switchView = function(viewId) {
                 document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
                 document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
@@ -1103,7 +1099,6 @@
                 }
             };
 
-            // Kesin ve Kalıcı Cihaz ID Yönetimi
             let permanentId = localStorage.getItem('studentPermanentId');
             if (!permanentId) {
                 permanentId = 'STU-' + Math.floor(1000 + Math.random() * 9000);
@@ -1121,7 +1116,6 @@
             let friendRequests = JSON.parse(localStorage.getItem('studentFriendRequests')) || [];
             let schedules = JSON.parse(localStorage.getItem('studentSchedules')) || [];
 
-            // Grup Veri Yapısı
             let groups = JSON.parse(localStorage.getItem('studentGroupsObj')) || [
                 { name: 'Genel Çalışma Odası', code: '100001', adminId: 'SYSTEM', members: [] },
                 { name: 'YKS Tayfa 2026', code: '202602', adminId: 'SYSTEM', members: [] },
@@ -1327,7 +1321,6 @@
                 micBtn.style.display = 'none';
             }
 
-            // Telefon Bildirim Sesi (Zil / Çan Efekti)
             function playPhoneNotificationSound() {
                 try {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1335,7 +1328,6 @@
                     const audioCtx = new AudioContext();
                     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-                    // Çift tonlu telefon bildirim sesi simülasyonu
                     const playTone = (freq, timeOffset, duration) => {
                         const osc = audioCtx.createOscillator();
                         const gain = audioCtx.createGain();
@@ -1349,18 +1341,19 @@
                         osc.stop(audioCtx.currentTime + timeOffset + duration);
                     };
 
-                    playTone(880, 0, 0.15); // La
-                    playTone(1318.51, 0.18, 0.3); // Mi
+                    playTone(880, 0, 0.15);
+                    playTone(1318.51, 0.18, 0.3);
                 } catch (e) {}
             }
 
-            // DERS PROGRAMI VE BİLDİRİM KONTROL SİSTEMİ
             const schClassName = document.getElementById('schClassName');
             const schDay = document.getElementById('schDay');
             const schTime = document.getElementById('schTime');
             const schNotifyBefore = document.getElementById('schNotifyBefore');
             const addScheduleBtn = document.getElementById('addScheduleBtn');
             const scheduleList = document.getElementById('scheduleList');
+            const bulkScheduleInput = document.getElementById('bulkScheduleInput');
+            const bulkImportScheduleBtn = document.getElementById('bulkImportScheduleBtn');
 
             if (addScheduleBtn) {
                 addScheduleBtn.addEventListener('click', () => {
@@ -1385,6 +1378,47 @@
                 });
             }
 
+            // Toplu Ders Programı İçe Aktar (JSON) Fonksiyonu
+            if (bulkImportScheduleBtn) {
+                bulkImportScheduleBtn.addEventListener('click', () => {
+                    const rawJson = bulkScheduleInput.value.trim();
+                    if (!rawJson) {
+                        alert('Lütfen içe aktarmak için JSON formatında veri yapıştırın!');
+                        return;
+                    }
+
+                    try {
+                        const parsedData = JSON.parse(rawJson);
+                        if (!Array.isArray(parsedData)) {
+                            alert('Geçersiz format! Veri bir dizi (array) olmalıdır.');
+                            return;
+                        }
+
+                        let addedCount = 0;
+                        parsedData.forEach(item => {
+                            if (item.name && item.day && item.time) {
+                                schedules.push({
+                                    id: Date.now() + Math.random(),
+                                    name: item.name,
+                                    day: item.day,
+                                    time: item.time,
+                                    notifyBefore: parseInt(item.notifyBefore) || 10
+                                });
+                                addedCount++;
+                            }
+                        });
+
+                        localStorage.setItem('studentSchedules', JSON.stringify(schedules));
+                        syncDataToCloud();
+                        renderSchedules();
+                        bulkScheduleInput.value = '';
+                        alert(`${addedCount} adet ders başarıyla toplu olarak eklendi!`);
+                    } catch (e) {
+                        alert('JSON çözümleme hatası! Lütfen geçerli bir JSON formatı girdiğinizden emin olun.');
+                    }
+                });
+            }
+
             window.deleteSchedule = function(id) {
                 schedules = schedules.filter(s => s.id !== id);
                 localStorage.setItem('studentSchedules', JSON.stringify(schedules));
@@ -1400,7 +1434,6 @@
                     return;
                 }
 
-                // Gün sıralaması için yardımcı
                 const dayOrder = { 'Pazartesi': 1, 'Salı': 2, 'Çarşamba': 3, 'Perşembe': 4, 'Cuma': 5, 'Cumartesi': 6, 'Pazar': 7 };
                 schedules.sort((a, b) => (dayOrder[a.day] || 8) - (dayOrder[b.day] || 8) || a.time.localeCompare(b.time));
 
@@ -1418,7 +1451,6 @@
                 });
             }
 
-            // Arka Planda Ders Saatini ve Bildirimleri Kontrol Eden Zamanlayıcı
             let lastAlertMinute = "";
             setInterval(() => {
                 if (schedules.length === 0) return;
@@ -1430,18 +1462,15 @@
                 const currentMinutes = String(now.getMinutes()).padStart(2, '0');
                 const currentTimeStr = `${currentHours}:${currentMinutes}`;
                 
-                // Aynı dakika içinde mükerrer bildirim çalmaması için kontrol
                 const currentMinuteKey = `${currentDayName}-${currentTimeStr}`;
                 if (lastAlertMinute === currentMinuteKey) return;
 
                 schedules.forEach(s => {
                     if (s.day === currentDayName) {
-                        // Ders saatini dakika cinsine çevir
                         const [cHour, cMin] = s.time.split(':').map(Number);
                         const classTotalMins = cHour * 60 + cMin;
                         const nowTotalMins = now.getHours() * 60 + now.getMinutes();
 
-                        // Bildirim yapılması gereken hedef dakika
                         const targetAlertMins = classTotalMins - s.notifyBefore;
 
                         if (nowTotalMins === targetAlertMins) {
@@ -1451,9 +1480,8 @@
                         }
                     }
                 });
-            }, 15000); // Her 15 saniyede bir kontrol et
+            }, 15000);
 
-            // Pomodoro Mantığı
             const pomoMinutesInput = document.getElementById('pomoMinutesInput');
             const pomoTimerDisplay = document.getElementById('pomodoroTimer');
             const pomoStartBtn = document.getElementById('pomoStart');
@@ -1701,7 +1729,6 @@
             if(searchInput) searchInput.addEventListener('input', renderNotes);
             if(filterCategory) filterCategory.addEventListener('change', renderNotes);
 
-            // Soru & Test Stüdyosu
             const studioSourceSelect = document.getElementById('studioSourceSelect');
             const studioDirectFile = document.getElementById('studioDirectFile');
             const studioGradeSelect = document.getElementById('studioGradeSelect');
@@ -1818,7 +1845,6 @@
                 });
             }
 
-            // Profil & Ayarlar Modalı
             const headerUserName = document.getElementById('headerUserName');
             const headerAvatarText = document.getElementById('headerAvatarText');
             const openSettingsModalBtn = document.getElementById('openSettingsModalBtn');
@@ -1886,7 +1912,6 @@
                 });
             }
 
-            // ÖZEL ARKADAŞLAR MODALI
             const openFriendsModalBtn = document.getElementById('openFriendsModalBtn');
             const friendsModal = document.getElementById('friendsModal');
             const closeFriendsModalBtn = document.getElementById('closeFriendsModalBtn');
@@ -1970,7 +1995,6 @@
                 renderFriends(); renderLeaderboard();
             };
 
-            // Çalışma Grupları & Yönetici Mantığı
             const groupInput = document.getElementById('groupInput');
             const addGroupBtn = document.getElementById('addGroupBtn');
             const joinGroupInput = document.getElementById('joinGroupInput');
@@ -2138,7 +2162,6 @@
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
 
-            // Sayfa İlk Yüklenme
             renderNotes(); 
             renderGroups(); 
             renderLeaderboard(); 
