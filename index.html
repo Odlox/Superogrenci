@@ -15,21 +15,37 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDS6KL1j1yCAA8S-nXvtHb6BnT5kHde2Wc",
-            authDomain: "super-ogrenci.firebaseapp.com",
-            projectId: "super-ogrenci",
-            storageBucket: "super-ogrenci.firebasestorage.app",
-            messagingSenderId: "954668642022",
-            appId: "1:954668642022:web:358f0f0fde760920a41527",
-            measurementId: "G-NFDNR7NL7K"
-        };
+        // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDS6KL1jlYcAA0S-nXvtHb6BnT5kHde2Wc",
+  authDomain: "super-ogrenci.firebaseapp.com",
+  projectId: "super-ogrenci",
+  storageBucket: "super-ogrenci.firebasestorage.app",
+  messagingSenderId: "954668642022",
+  appId: "1:954668642022:web:358f0f0fde760920a41527",
+  measurementId: "G-NFDNR7NL7K"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
         try {
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
+            const auth = getAuth(app);
             window.db = db;
+            window.auth = auth;
+            window.fbAuthModules = { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
             window.fbModules = { doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion };
             
             if (window.initCloudSync) {
@@ -61,7 +77,7 @@
             background-color: var(--bg-main);
             color: var(--text-main);
             margin: 0;
-            padding: 10px 15px 20px 15px;
+            padding: 10px 15px 30px 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -130,6 +146,7 @@
             gap: 10px;
         }
         
+        /* Masaüstü Üst Sekmeler */
         .nav-tabs {
             width: 100%;
             max-width: 1200px;
@@ -154,6 +171,49 @@
             background-color: var(--accent);
             color: var(--bg-main);
             border-color: var(--accent);
+        }
+
+        /* Mobil Alt Navigasyon Barı (Sadece Telefonlar İçin) */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 35px;
+            padding: 8px 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: space-around;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        .mobile-nav-item {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            gap: 3px;
+            padding: 6px 10px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+        .mobile-nav-item span.nav-icon {
+            font-size: 18px;
+        }
+        .mobile-nav-item.active {
+            color: var(--bg-main);
+            background-color: var(--accent);
+            font-weight: bold;
         }
 
         .action-badge-btn {
@@ -686,7 +746,26 @@
             background-color: #475569;
         }
 
-        @media (max-width: 900px) {
+        /* YALNIZCA TELEFONLAR İÇİN MEDIA QUERY (768px ve altı) */
+        @media (max-width: 768px) {
+            .nav-tabs {
+                display: none !important;
+            }
+            .mobile-bottom-nav {
+                display: flex !important;
+            }
+            body {
+                padding-bottom: 90px !important;
+            }
+            .main-wrapper {
+                flex-direction: column;
+            }
+            .studio-workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 900px) and (min-width: 769px) {
             .main-wrapper {
                 flex-direction: column;
             }
@@ -699,13 +778,14 @@
 <body>
 
     <div id="updateBanner">
-        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.4) yayınlandı!</span>
+        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.7) yayınlandı!</span>
         <button onclick="window.location.reload()">Şimdi Güncelle</button>
     </div>
 
     <header class="app-header">
-        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.4)</span></h1>
+        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.7)</span></h1>
         <div class="header-actions">
+            <button id="installAppBtn" style="display: none; background-color: var(--success); color: #fff; padding: 6px 12px; font-size: 11px; border-radius: 20px;">📲 Yükle</button>
             <div class="action-badge-btn" id="openFriendsModalBtn" title="Arkadaşlarım">
                 <span>👥 Arkadaşlarım</span>
             </div>
@@ -716,11 +796,28 @@
         </div>
     </header>
 
-    <div class="nav-tabs">
+    <!-- MASAÜSTÜ ÜST SEKMELERİ -->
+    <div class="nav-tabs" id="desktopNavTabs">
         <div class="nav-tab-btn active" id="tabBtnNotes" onclick="switchView('notesView')">📚 Notlar & Pomodoro</div>
         <div class="nav-tab-btn" id="tabBtnStudio" onclick="switchView('quizStudioView')">📝 Soru & Test</div>
         <div class="nav-tab-btn" id="tabBtnSchedule" onclick="switchView('scheduleView')">📅 Ders Programı</div>
     </div>
+
+    <!-- SADECE TELEFONLAR İÇİN ALT NAVİGASYON BARI -->
+    <nav class="mobile-bottom-nav" id="mobileBottomNav">
+        <button class="mobile-nav-item active" id="mTabBtnNotes" onclick="switchView('notesView')">
+            <span class="nav-icon">📚</span>
+            <span>Notlar</span>
+        </button>
+        <button class="mobile-nav-item" id="mTabBtnStudio" onclick="switchView('quizStudioView')">
+            <span class="nav-icon">📝</span>
+            <span>Stüdyo</span>
+        </button>
+        <button class="mobile-nav-item" id="mTabBtnSchedule" onclick="switchView('scheduleView')">
+            <span class="nav-icon">📅</span>
+            <span>Program</span>
+        </button>
+    </nav>
 
     <!-- SEKME 1: Notlar ve Çalışma Paneli -->
     <div id="notesView" class="view-container active">
@@ -992,6 +1089,40 @@
         </div>
     </div>
 
+    <!-- GİRİŞ / KAYIT MODALI (Firebase Auth) -->
+    <div class="modal-overlay" id="authModal" style="display: flex;">
+        <div class="modal-card" style="text-align: center;">
+            <h2>🚀 Süper Öğrenci'ye Hoş Geldiniz</h2>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Tüm cihazlarınızda aynı profille çalışmak ve verilerinizi bulutta eşitlemek için giriş yapın.</p>
+            
+            <button id="googleLoginBtn" style="background-color: #ffffff; color: #0f172a; font-weight: bold; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; border-radius: 8px; margin-bottom: 15px;">
+                <span style="font-size: 16px;">🌐</span> Google ile Devam Et
+            </button>
+
+            <div style="display: flex; align-items: center; text-align: center; color: var(--text-muted); font-size: 11px; margin-bottom: 15px;">
+                <div style="flex: 1; border-bottom: 1px solid var(--border-color);"></div>
+                <span style="padding: 0 10px;">Veya E-posta ile</span>
+                <div style="flex: 1; border-bottom: 1px solid var(--border-color);"></div>
+            </div>
+
+            <div class="modal-field" style="text-align: left;">
+                <label>E-posta Adresi:</label>
+                <input type="email" id="authEmail" placeholder="ornek@ogrenci.com">
+            </div>
+            <div class="modal-field" style="text-align: left; margin-top: 8px;">
+                <label>Şifre:</label>
+                <input type="password" id="authPassword" placeholder="******">
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button id="emailLoginBtn" style="flex: 1; background-color: var(--accent); color: var(--bg-main);">Giriş Yap</button>
+                <button id="emailRegisterBtn" style="flex: 1; background-color: var(--success); color: white;">Kayıt Ol</button>
+            </div>
+            
+            <button id="skipAuthBtn" class="secondary-btn" style="margin-top: 10px; width: 100%; font-size: 11px; padding: 8px;">Çevrimdışı (Misafir) Devam Et</button>
+        </div>
+    </div>
+
     <!-- Profil & Ayarlar Modalı -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal-card">
@@ -1027,6 +1158,7 @@
 
             <div class="modal-actions">
                 <button id="saveSettingsBtn">Kaydet</button>
+                <button id="logoutBtn" style="background-color: var(--danger); color: white;">Çıkış Yap</button>
                 <button id="closeModalBtn" class="secondary-btn">Kapat</button>
             </div>
         </div>
@@ -1052,7 +1184,33 @@
 
     <script>
         const CENTRAL_GEMINI_API_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN";
-        const APP_VERSION = "v1.0.4";
+        const APP_VERSION = "v1.0.7";
+
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('installAppBtn');
+            if (installBtn) installBtn.style.display = 'inline-block';
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const installBtn = document.getElementById('installAppBtn');
+            if (installBtn) {
+                installBtn.addEventListener('click', async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const { outcome } = await deferredPrompt.userChoice;
+                        if (outcome === 'accepted') {
+                            installBtn.style.display = 'none';
+                        }
+                        deferredPrompt = null;
+                    } else {
+                        alert('Bu tarayıcı veya cihaz üzerinden uygulama zaten yüklenmiş.');
+                    }
+                });
+            }
+        });
 
         if ('serviceWorker' in navigator) {
             const swCode = `
@@ -1091,17 +1249,27 @@
             window.switchView = function(viewId) {
                 document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
                 document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
                 
                 const targetView = document.getElementById(viewId);
                 if (targetView) targetView.classList.add('active');
 
                 if (viewId === 'notesView') {
-                    document.getElementById('tabBtnNotes').classList.add('active');
+                    const dtBtn = document.getElementById('tabBtnNotes');
+                    const mbBtn = document.getElementById('mTabBtnNotes');
+                    if (dtBtn) dtBtn.classList.add('active');
+                    if (mbBtn) mbBtn.classList.add('active');
                 } else if (viewId === 'quizStudioView') {
-                    document.getElementById('tabBtnStudio').classList.add('active');
+                    const dtBtn = document.getElementById('tabBtnStudio');
+                    const mbBtn = document.getElementById('mTabBtnStudio');
+                    if (dtBtn) dtBtn.classList.add('active');
+                    if (mbBtn) mbBtn.classList.add('active');
                     populateStudioSources();
                 } else if (viewId === 'scheduleView') {
-                    document.getElementById('tabBtnSchedule').classList.add('active');
+                    const dtBtn = document.getElementById('tabBtnSchedule');
+                    const mbBtn = document.getElementById('mTabBtnSchedule');
+                    if (dtBtn) dtBtn.classList.add('active');
+                    if (mbBtn) mbBtn.classList.add('active');
                     renderSchedules();
                 }
             };
@@ -1138,6 +1306,79 @@
 
             let messages = [];
             let notes = JSON.parse(localStorage.getItem('superStudentNotes')) || [];
+
+            // Firebase Auth Entegrasyonu
+            const authModal = document.getElementById('authModal');
+            const googleLoginBtn = document.getElementById('googleLoginBtn');
+            const emailLoginBtn = document.getElementById('emailLoginBtn');
+            const emailRegisterBtn = document.getElementById('emailRegisterBtn');
+            const skipAuthBtn = document.getElementById('skipAuthBtn');
+            const authEmail = document.getElementById('authEmail');
+            const authPassword = document.getElementById('authPassword');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            if (window.auth && window.fbAuthModules) {
+                window.fbAuthModules.onAuthStateChanged(window.auth, (user) => {
+                    if (user) {
+                        userProfile.name = user.displayName || user.email.split('@')[0];
+                        userProfile.id = 'STU-' + user.uid.substring(0, 6).toUpperCase();
+                        localStorage.setItem('studentProfile', JSON.stringify(userProfile));
+                        if(authModal) authModal.style.display = 'none';
+                        updateHeaderProfile();
+                        initRealtimeListener();
+                    }
+                });
+            }
+
+            if (googleLoginBtn) {
+                googleLoginBtn.addEventListener('click', async () => {
+                    try {
+                        const provider = new window.fbAuthModules.GoogleAuthProvider();
+                        await window.fbAuthModules.signInWithPopup(window.auth, provider);
+                        if(authModal) authModal.style.display = 'none';
+                    } catch(e) { alert('Google ile giriş hatası: ' + e.message); }
+                });
+            }
+
+            if (emailLoginBtn) {
+                emailLoginBtn.addEventListener('click', async () => {
+                    const email = authEmail.value.trim();
+                    const pass = authPassword.value.trim();
+                    if (!email || !pass) { alert('E-posta ve şifre girin.'); return; }
+                    try {
+                        await window.fbAuthModules.signInWithEmailAndPassword(window.auth, email, pass);
+                        if(authModal) authModal.style.display = 'none';
+                    } catch(e) { alert('Giriş başarısız: ' + e.message); }
+                });
+            }
+
+            if (emailRegisterBtn) {
+                emailRegisterBtn.addEventListener('click', async () => {
+                    const email = authEmail.value.trim();
+                    const pass = authPassword.value.trim();
+                    if (!email || !pass) { alert('E-posta ve şifre girin.'); return; }
+                    try {
+                        await window.fbAuthModules.createUserWithEmailAndPassword(window.auth, email, pass);
+                        if(authModal) authModal.style.display = 'none';
+                    } catch(e) { alert('Kayıt olma başarısız: ' + e.message); }
+                });
+            }
+
+            if (skipAuthBtn) {
+                skipAuthBtn.addEventListener('click', () => {
+                    if(authModal) authModal.style.display = 'none';
+                });
+            }
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    if (window.auth) {
+                        await window.fbAuthModules.signOut(window.auth);
+                    }
+                    localStorage.clear();
+                    window.location.reload();
+                });
+            }
 
             async function syncDataToCloud() {
                 if (!window.db) return;
@@ -1214,7 +1455,6 @@
                             if (data.profile) {
                                 userProfile.name = data.profile.name || userProfile.name;
                                 userProfile.accentColor = data.profile.accentColor || userProfile.accentColor;
-                                userProfile.id = permanentId;
                                 localStorage.setItem('studentProfile', JSON.stringify(userProfile));
                             }
                             
@@ -1328,19 +1568,34 @@
                 micBtn.style.display = 'none';
             }
 
+            // GÜÇLENDİRİLMİŞ SES MOTORU VE AUTOPLAY ENGELİ ÇÖZÜCÜSÜ
+            let globalAudioCtx = null;
+
+            function getAudioContext() {
+                if (!globalAudioCtx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) globalAudioCtx = new AudioContext();
+                }
+                if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+                    globalAudioCtx.resume();
+                }
+                return globalAudioCtx;
+            }
+
+            document.addEventListener('click', () => { getAudioContext(); }, { once: true });
+            document.addEventListener('touchstart', () => { getAudioContext(); }, { once: true });
+
             function playPhoneNotificationSound() {
                 try {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    if (!AudioContext) return;
-                    const audioCtx = new AudioContext();
-                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    const audioCtx = getAudioContext();
+                    if (!audioCtx) return;
 
                     const playTone = (freq, timeOffset, duration) => {
                         const osc = audioCtx.createOscillator();
                         const gain = audioCtx.createGain();
                         osc.type = 'sine';
                         osc.frequency.setValueAtTime(freq, audioCtx.currentTime + timeOffset);
-                        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + timeOffset);
+                        gain.gain.setValueAtTime(0.3, audioCtx.currentTime + timeOffset);
                         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + timeOffset + duration);
                         osc.connect(gain);
                         gain.connect(audioCtx.destination);
@@ -1348,9 +1603,15 @@
                         osc.stop(audioCtx.currentTime + timeOffset + duration);
                     };
 
-                    playTone(880, 0, 0.15);
-                    playTone(1318.51, 0.18, 0.3);
-                } catch (e) {}
+                    playTone(880, 0, 0.2);
+                    playTone(1318.51, 0.25, 0.4);
+                } catch (e) {
+                    console.warn("Ses çalınamadı:", e);
+                }
+            }
+
+            if ('Notification' in window && Notification.permission !== 'granted') {
+                Notification.requestPermission();
             }
 
             const schClassName = document.getElementById('schClassName');
@@ -1526,33 +1787,50 @@
                 });
             }
 
-            let lastAlertMinute = "";
-            setInterval(() => {
-                if (schedules.length === 0) return;
+            // GÜÇLENDİRİLMİŞ ZAMANLAYICI VE BİLDİRİM KONTROLÜ
+            let triggeredSchedules = new Set();
+            function checkSchedules() {
+                if (!schedules || schedules.length === 0) return;
+
                 const now = new Date();
                 const daysMap = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
                 const currentDayName = daysMap[now.getDay()];
-                const currentHours = String(now.getHours()).padStart(2, '0');
-                const currentMinutes = String(now.getMinutes()).padStart(2, '0');
-                const currentTimeStr = `${currentHours}:${currentMinutes}`;
-                const currentMinuteKey = `${currentDayName}-${currentTimeStr}`;
-                if (lastAlertMinute === currentMinuteKey) return;
+                const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
 
                 schedules.forEach(s => {
                     if (s.day === currentDayName) {
                         const [cHour, cMin] = s.time.split(':').map(Number);
-                        const classTotalMins = cHour * 60 + cMin;
-                        const nowTotalMins = now.getHours() * 60 + now.getMinutes();
-                        const targetAlertMins = classTotalMins - s.notifyBefore;
+                        const classTotalMinutes = cHour * 60 + cMin;
+                        const targetNotifyMinutes = classTotalMinutes - (s.notifyBefore || 10);
 
-                        if (nowTotalMins === targetAlertMins) {
-                            lastAlertMinute = currentMinuteKey;
+                        const eventKey = `${s.id}-${now.toLocaleDateString()}-${targetNotifyMinutes}`;
+                        
+                        if (currentTotalMinutes === targetNotifyMinutes && !triggeredSchedules.has(eventKey)) {
+                            triggeredSchedules.add(eventKey);
+                            
                             playPhoneNotificationSound();
-                            alert(`🔔 YAKLAŞAN DERS UYARISI!\n\n"${s.name}" dersinizin başlamasına ${s.notifyBefore} dakika kaldı! (${s.time})`);
+
+                            if ('Notification' in window && Notification.permission === 'granted') {
+                                new Notification("🔔 DERS VAKTİ YAKLAŞIYOR!", {
+                                    body: `"${s.name}" dersinin başlamasına ${s.notifyBefore} dk kaldı!`,
+                                    icon: "https://cdn-icons-png.flaticon.com/512/2921/2921222.png"
+                                });
+                            }
+
+                            alert(`🔔 DERS VAKTİ YAKLAŞIYOR!\n\n"${s.name}" dersinin başlamasına ${s.notifyBefore} dk kaldı!`);
                         }
                     }
                 });
-            }, 15000);
+            }
+
+            setInterval(checkSchedules, 10000);
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    getAudioContext();
+                    checkSchedules();
+                }
+            });
 
             const pomoMinutesInput = document.getElementById('pomoMinutesInput');
             const pomoTimerDisplay = document.getElementById('pomodoroTimer');
@@ -1565,10 +1843,8 @@
 
             function playBeepSound() {
                 try {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    if (!AudioContext) return;
-                    const audioCtx = new AudioContext();
-                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    const audioCtx = getAudioContext();
+                    if (!audioCtx) return;
                     const oscillator = audioCtx.createOscillator();
                     const gainNode = audioCtx.createGain();
                     oscillator.type = 'sine';
@@ -1822,7 +2098,6 @@
                 });
             }
 
-            // DÜZeltilen GERÇEK DOSYA / FOTOĞRAF ANALİZ EDEREK TEST ÜRETME FONKSİYONU
             if (generateTestSheetBtn) {
                 generateTestSheetBtn.addEventListener('click', async () => {
                     const sourceIdx = studioSourceSelect.value;
@@ -1867,7 +2142,6 @@
                             sourceTitle = note.title;
                             let fullText = (note.content || "") + (note.file && note.file.data ? ` [Ekli Dosya Verisi Mevcut]` : "");
                             
-                            // Eğer not içinde kayıtlı bir görsel dosyası varsa onu da doğrudan modele verelim
                             if (note.file && note.file.data && note.file.data.startsWith('data:image')) {
                                 const mimeMatch = note.file.data.match(/data:(.*?);base64,/);
                                 const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
@@ -1972,7 +2246,6 @@
                     if (newName) {
                         userProfile.name = newName;
                         userProfile.accentColor = tempSelectedColor;
-                        userProfile.id = permanentId;
                         localStorage.setItem('studentProfile', JSON.stringify(userProfile));
                         syncDataToCloud();
                         updateHeaderProfile();
@@ -2011,6 +2284,9 @@
                 if (e.target === settingsModal) settingsModal.style.display = 'none';
                 if (e.target === friendsModal) friendsModal.style.display = 'none';
                 if (e.target === groupAdminModal) groupAdminModal.style.display = 'none';
+                if (e.target === authModal && authModal.style.display === 'flex') {
+                    // İsteğe bağlı zorunlu tutmak için kapatılmayabilir
+                }
             });
 
             function renderFriends() {
