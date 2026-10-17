@@ -740,6 +740,82 @@
         }
 
 
+
+        /* ===== İNTERAKTİF TEST ===== */
+        .quiz-wrap { display: flex; flex-direction: column; gap: 12px; }
+        .quiz-head { border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        .quiz-title { margin: 0 0 4px; font-size: 16px; color: var(--text-main); word-break: break-word; }
+        .quiz-meta { font-size: 11px; color: var(--accent); }
+        .quiz-note { font-size: 12px; color: #f59e0b; background: rgba(245,158,11,.1); padding: 8px 10px; border-radius: 8px; }
+        .quiz-progress { background: var(--bg-main); padding: 8px 0 4px; z-index: 5; }
+        .quiz-progress-text { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+        .quiz-bar { height: 6px; background: var(--border-color); border-radius: 6px; overflow: hidden; }
+        .quiz-bar-fill { height: 100%; width: 0; background: var(--accent); border-radius: 6px; transition: width .3s ease; }
+        .quiz-q { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; transition: border-color .2s; }
+        .quiz-q.is-correct { border-color: var(--success); }
+        .quiz-q.is-wrong { border-color: var(--danger); }
+        .quiz-q.is-blank { border-color: #64748b; }
+        .quiz-q-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .quiz-q-num { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+        .quiz-q-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+        .quiz-q-tag:empty { display: none; }
+        .quiz-q-tag.ok { background: rgba(16,185,129,.18); color: #34d399; }
+        .quiz-q-tag.bad { background: rgba(239,68,68,.18); color: #f87171; }
+        .quiz-q-tag.blank { background: rgba(148,163,184,.18); color: var(--text-muted); }
+        .quiz-q-text { font-size: 14px; line-height: 1.6; margin-bottom: 12px; white-space: pre-wrap; word-break: break-word; }
+        .quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+        .quiz-opt {
+            display: flex; align-items: flex-start; gap: 10px; text-align: left; width: 100%;
+            background: var(--bg-main); color: var(--text-main); border: 1.5px solid var(--border-color);
+            padding: 10px 12px; border-radius: 10px; font-weight: 500; font-size: 14px; line-height: 1.45;
+            cursor: pointer; transition: border-color .15s, background .15s, transform .1s, opacity .2s;
+        }
+        .quiz-opt:hover:not(:disabled) { border-color: var(--accent); background: var(--bg-main); }
+        .quiz-opt:active:not(:disabled) { transform: scale(.99); }
+        .quiz-opt:disabled { cursor: default; }
+        .quiz-opt-letter {
+            flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            background: var(--border-color); color: var(--text-main); font-size: 12px; font-weight: 700;
+        }
+        .quiz-opt-text { flex: 1; min-width: 0; word-break: break-word; padding-top: 2px; }
+        .quiz-opt.correct { background: rgba(16,185,129,.16); border-color: var(--success); }
+        .quiz-opt.correct .quiz-opt-letter { background: var(--success); color: #fff; }
+        .quiz-opt.wrong { background: rgba(239,68,68,.16); border-color: var(--danger); animation: quizShake .35s; }
+        .quiz-opt.wrong .quiz-opt-letter { background: var(--danger); color: #fff; }
+        .quiz-opt.dim { opacity: .45; }
+        .quiz-opt.reveal { border-color: var(--success); border-style: dashed; }
+        @keyframes quizShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+        .quiz-expl { margin-top: 10px; font-size: 12px; line-height: 1.55; color: var(--text-muted); background: var(--bg-main); border-radius: 8px; padding: 8px 10px; }
+        .quiz-finish { padding: 14px; font-size: 15px; border-radius: 12px; background: var(--accent); color: var(--bg-main); }
+        .quiz-result { background: var(--bg-card); border: 1px solid var(--accent); border-radius: 14px; padding: 16px; }
+        .quiz-result-title { margin: 0 0 14px; font-size: 16px; color: var(--accent); }
+        .quiz-result-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .quiz-ring { --p: 0; width: 96px; height: 96px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+            background: conic-gradient(var(--success) calc(var(--p) * 1%), var(--border-color) 0); }
+        .quiz-ring-in { width: 76px; height: 76px; border-radius: 50%; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
+        .quiz-stats { display: grid; grid-template-columns: repeat(4, minmax(56px, 1fr)); gap: 8px; flex: 1; min-width: 240px; }
+        .quiz-stat { background: var(--bg-main); border-radius: 10px; padding: 10px 6px; text-align: center; border-bottom: 3px solid var(--border-color); }
+        .quiz-stat.ok { border-bottom-color: var(--success); } .quiz-stat.bad { border-bottom-color: var(--danger); }
+        .quiz-stat.blank { border-bottom-color: #94a3b8; } .quiz-stat.net { border-bottom-color: var(--accent); }
+        .quiz-stat-val { font-size: 22px; font-weight: 700; }
+        .quiz-stat.ok .quiz-stat-val { color: #34d399; } .quiz-stat.bad .quiz-stat-val { color: #f87171; } .quiz-stat.net .quiz-stat-val { color: var(--accent); }
+        .quiz-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .quiz-net-note { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+        .quiz-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+        .quiz-chip { min-width: 36px; height: 36px; padding: 0; border-radius: 8px; font-size: 13px; font-weight: 700; color: #fff; }
+        .quiz-chip.ok { background: var(--success); } .quiz-chip.bad { background: var(--danger); } .quiz-chip.blank { background: #64748b; }
+        .quiz-msg { margin-top: 14px; font-size: 14px; }
+        .quiz-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+        .quiz-btn { flex: 1; min-width: 150px; padding: 12px; border-radius: 10px; }
+        .quiz-btn.alt { background: var(--border-color); color: var(--text-main); }
+        @media (min-width: 769px) { .quiz-progress { position: sticky; top: -15px; } }
+        @media (max-width: 768px) {
+            .quiz-q { padding: 12px; }
+            .quiz-opt { min-height: 48px; }
+            .quiz-stats { min-width: 0; width: 100%; grid-template-columns: repeat(2, 1fr); }
+            .quiz-result-top { justify-content: center; }
+        }
+
         /* ===== AÇILIŞ ANİMASYONU ===== */
         #introSplash {
             position: fixed; inset: 0; z-index: 10000;
@@ -2506,6 +2582,191 @@
                 });
             }
 
+
+            // ===== İNTERAKTİF TEST MOTORU =====
+            function cleanQuizText(t) {
+                return String(t == null ? '' : t).replace(/\*\*/g, '').replace(/^\s*[#*]+\s*/gm, '').replace(/\s+\n/g, '\n').trim();
+            }
+            function parseQuizReply(raw) {
+                let txt = String(raw || '').replace(/```json/gi, '').replace(/```/g, '').trim();
+                const a = Math.min(...['{', '['].map(c => { const i = txt.indexOf(c); return i < 0 ? Infinity : i; }));
+                if (a === Infinity) return [];
+                txt = txt.slice(a);
+                let obj;
+                try { obj = JSON.parse(txt); }
+                catch (e) {
+                    const end = Math.max(txt.lastIndexOf('}'), txt.lastIndexOf(']'));
+                    try { obj = JSON.parse(txt.slice(0, end + 1)); } catch (e2) { return []; }
+                }
+                const arr = Array.isArray(obj) ? obj : (obj.questions || obj.sorular || []);
+                const out = [];
+                (Array.isArray(arr) ? arr : []).forEach(q => {
+                    if (!q || !Array.isArray(q.options) || q.options.length < 2) return;
+                    let c = q.correct;
+                    if (typeof c === 'string') c = 'ABCDE'.indexOf(c.trim().toUpperCase().charAt(0));
+                    if (!Number.isInteger(c) || c < 0 || c >= q.options.length) return;
+                    out.push({
+                        question: cleanQuizText(q.question),
+                        options: q.options.map(o => cleanQuizText(o).replace(/^\s*[A-Ea-e][\)\.\-:]\s+/, '')),
+                        correct: c,
+                        explanation: cleanQuizText(q.explanation || '')
+                    });
+                });
+                return out;
+            }
+
+            function renderQuiz(rawQuestions, sourceTitle, meta) {
+                const LETTERS = ['A', 'B', 'C', 'D', 'E'];
+                // Şıkları karıştır: doğru cevap hep aynı yerde olmasın
+                const questions = rawQuestions.map(q => {
+                    const idx = q.options.map((_, i) => i);
+                    for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+                    return { text: q.question, options: idx.map(i => q.options[i]), correct: idx.indexOf(q.correct), explanation: q.explanation };
+                });
+                const chosen = questions.map(() => null);
+                let finished = false;
+
+                const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+                const wrap = el('div', 'quiz-wrap');
+                const head = el('div', 'quiz-head');
+                head.appendChild(el('h3', 'quiz-title', '📄 ' + sourceTitle));
+                head.appendChild(el('div', 'quiz-meta', `Kademe: ${meta.grade} | Zorluk: ${meta.diff} | Soru: ${questions.length}`));
+                wrap.appendChild(head);
+                if (questions.length < meta.wanted) {
+                    wrap.appendChild(el('div', 'quiz-note', `İstenen ${meta.wanted} sorudan ${questions.length} tanesi geçerli biçimde üretilebildi.`));
+                }
+
+                const progress = el('div', 'quiz-progress');
+                const progressText = el('div', 'quiz-progress-text');
+                const bar = el('div', 'quiz-bar'); const barFill = el('div', 'quiz-bar-fill'); bar.appendChild(barFill);
+                progress.appendChild(progressText); progress.appendChild(bar);
+                wrap.appendChild(progress);
+
+                const cards = [], optBtns = [], expls = [], tags = [];
+                questions.forEach((q, qi) => {
+                    const card = el('div', 'quiz-q');
+                    const top = el('div', 'quiz-q-top');
+                    top.appendChild(el('span', 'quiz-q-num', 'Soru ' + (qi + 1)));
+                    const tag = el('span', 'quiz-q-tag'); top.appendChild(tag); tags.push(tag);
+                    card.appendChild(top);
+                    card.appendChild(el('div', 'quiz-q-text', q.text));
+                    const list = el('div', 'quiz-opts'); const btns = [];
+                    q.options.forEach((opt, oi) => {
+                        const b = el('button', 'quiz-opt'); b.type = 'button';
+                        b.appendChild(el('span', 'quiz-opt-letter', LETTERS[oi]));
+                        b.appendChild(el('span', 'quiz-opt-text', opt));
+                        b.addEventListener('click', () => choose(qi, oi));
+                        list.appendChild(b); btns.push(b);
+                    });
+                    card.appendChild(list);
+                    const ex = el('div', 'quiz-expl'); ex.style.display = 'none'; card.appendChild(ex);
+                    wrap.appendChild(card); cards.push(card); optBtns.push(btns); expls.push(ex);
+                });
+
+                const finishBtn = el('button', 'quiz-finish', '🏁 Testi Bitir & Analizi Gör'); finishBtn.type = 'button';
+                wrap.appendChild(finishBtn);
+                const resultBox = el('div', 'quiz-result'); resultBox.style.display = 'none';
+                wrap.appendChild(resultBox);
+
+                function counts() {
+                    let d = 0, y = 0, b = 0;
+                    questions.forEach((q, i) => { if (chosen[i] === null) b++; else if (chosen[i] === q.correct) d++; else y++; });
+                    return { d, y, b };
+                }
+                function paintQuestion(qi) {
+                    const q = questions[qi], pick = chosen[qi], btns = optBtns[qi];
+                    const answered = pick !== null;
+                    btns.forEach((b, oi) => {
+                        b.classList.remove('correct', 'wrong', 'dim', 'reveal');
+                        b.disabled = answered || finished;
+                        if (answered) {
+                            if (oi === q.correct) b.classList.add('correct');
+                            else if (oi === pick) b.classList.add('wrong');
+                            else b.classList.add('dim');
+                        } else if (finished && oi === q.correct) b.classList.add('reveal');
+                    });
+                    cards[qi].classList.toggle('is-correct', answered && pick === q.correct);
+                    cards[qi].classList.toggle('is-wrong', answered && pick !== q.correct);
+                    cards[qi].classList.toggle('is-blank', finished && !answered);
+                    tags[qi].textContent = answered ? (pick === q.correct ? '✓ Doğru' : '✗ Yanlış') : (finished ? '○ Boş' : '');
+                    tags[qi].className = 'quiz-q-tag ' + (answered ? (pick === q.correct ? 'ok' : 'bad') : (finished ? 'blank' : ''));
+                    if ((answered || finished) && q.explanation) {
+                        expls[qi].style.display = 'block';
+                        expls[qi].textContent = '💡 ' + (answered && pick !== q.correct ? `Doğru cevap ${LETTERS[q.correct]}. ` : '') + q.explanation;
+                    } else if (answered && pick !== q.correct) {
+                        expls[qi].style.display = 'block';
+                        expls[qi].textContent = `Doğru cevap ${LETTERS[q.correct]}.`;
+                    }
+                }
+                function updateProgress() {
+                    const c = counts(); const done = questions.length - c.b;
+                    progressText.textContent = `${done} / ${questions.length} cevaplandı`;
+                    barFill.style.width = (done / questions.length * 100) + '%';
+                }
+                function choose(qi, oi) {
+                    if (finished || chosen[qi] !== null) return;
+                    chosen[qi] = oi; paintQuestion(qi); updateProgress();
+                }
+                function finish() {
+                    if (finished) return;
+                    const c0 = counts();
+                    if (c0.b > 0 && !confirm(`${c0.b} soru boş. Yine de bitirilsin mi?`)) return;
+                    finished = true;
+                    questions.forEach((_, i) => paintQuestion(i));
+                    finishBtn.style.display = 'none';
+                    showResult();
+                }
+                function showResult() {
+                    const { d, y, b } = counts(); const n = questions.length;
+                    const net = Math.round((d - y / (questions[0].options.length - 1)) * 100) / 100;
+                    const pct = Math.round(d / n * 100);
+                    resultBox.style.display = 'block'; resultBox.textContent = '';
+                    resultBox.appendChild(el('h3', 'quiz-result-title', '📊 Test Analizi'));
+
+                    const top = el('div', 'quiz-result-top');
+                    const ring = el('div', 'quiz-ring'); ring.style.setProperty('--p', pct);
+                    ring.appendChild(el('div', 'quiz-ring-in', '%' + pct));
+                    top.appendChild(ring);
+                    const stats = el('div', 'quiz-stats');
+                    [['Doğru', d, 'ok'], ['Yanlış', y, 'bad'], ['Boş', b, 'blank'], ['Net', net, 'net']].forEach(([label, val, cls]) => {
+                        const st = el('div', 'quiz-stat ' + cls);
+                        st.appendChild(el('div', 'quiz-stat-val', val)); st.appendChild(el('div', 'quiz-stat-label', label));
+                        stats.appendChild(st);
+                    });
+                    top.appendChild(stats); resultBox.appendChild(top);
+                    resultBox.appendChild(el('div', 'quiz-net-note', `Net = Doğru − Yanlış ÷ ${questions[0].options.length - 1} (YKS usulü)`));
+
+                    const chips = el('div', 'quiz-chips');
+                    questions.forEach((q, i) => {
+                        const st = chosen[i] === null ? 'blank' : (chosen[i] === q.correct ? 'ok' : 'bad');
+                        const chip = el('button', 'quiz-chip ' + st, String(i + 1)); chip.type = 'button';
+                        chip.title = 'Soru ' + (i + 1);
+                        chip.addEventListener('click', () => cards[i].scrollIntoView({ behavior: 'smooth', block: 'center' }));
+                        chips.appendChild(chip);
+                    });
+                    resultBox.appendChild(chips);
+
+                    const msg = pct >= 80 ? '🎉 Harika! Konuya çok iyi hâkimsin.' : pct >= 50 ? '👍 İyi gidiyorsun, yanlışlarına bir göz at.' : '💪 Biraz daha tekrar iyi gelir. Yanlışlarının açıklamalarına bak.';
+                    resultBox.appendChild(el('div', 'quiz-msg', msg));
+
+                    const actions = el('div', 'quiz-actions');
+                    const again = el('button', 'quiz-btn', '🔁 Aynı Testi Tekrar Çöz'); again.type = 'button';
+                    again.addEventListener('click', () => { renderQuiz(rawQuestions, sourceTitle, meta); studioDisplayBox.scrollTop = 0; });
+                    const fresh = el('button', 'quiz-btn alt', '✨ Yeni Test Oluştur'); fresh.type = 'button';
+                    fresh.addEventListener('click', () => { generateTestSheetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+                    actions.appendChild(again); actions.appendChild(fresh);
+                    resultBox.appendChild(actions);
+                    setTimeout(() => resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+                }
+                finishBtn.addEventListener('click', finish);
+
+                studioDisplayBox.textContent = '';
+                studioDisplayBox.appendChild(wrap);
+                studioDisplayBox.scrollTop = 0;
+                updateProgress();
+            }
+
             if (generateTestSheetBtn) {
                 generateTestSheetBtn.addEventListener('click', async () => {
                     const sourceIdx = studioSourceSelect.value;
@@ -2527,8 +2788,16 @@
                         let requestBodyContents = [];
                         let sourceTitle = "Yüklenen Dosya / Kaynak";
 
-                        let promptQuery = type === 'test' 
-                            ? `Sen profesyonel bir eğitmensin. Aşağıdaki içerik/görsele dayanarak ${grade} kademesine uygun, ${diff} zorlukta tam ${count} adet özgün çoktan seçmeli test sorusu hazırla. Her sorunun 4 şıkkı (A, B, C, D) ve doğru cevabı belirtilsin.`
+                        let promptQuery = type === 'test'
+                            ? `Sen profesyonel bir eğitmensin. Aşağıdaki içerik/görsele dayanarak ${grade} kademesine uygun, ${diff} zorlukta tam ${count} adet özgün çoktan seçmeli test sorusu hazırla.
+KURALLAR:
+- Her sorunun TAM 5 şıkkı olsun ve yalnızca BİR şık doğru olsun. Çeldiriciler makul ve birbirine yakın olsun.
+- Şıkların başına A), B) gibi harf KOYMA, yalnızca şık metnini yaz.
+- "correct" alanına doğru şıkkın dizinini yaz (0 = ilk şık, 4 = son şık). Doğru şık hep aynı sırada olmasın.
+- "explanation" alanına doğru cevabın 1-2 cümlelik kısa gerekçesini yaz.
+- Markdown (**, #, *) KULLANMA, düz metin yaz.
+- Yanıtın SADECE şu JSON biçiminde olsun, başka hiçbir metin ekleme:
+{"questions":[{"question":"...","options":["...","...","...","...","..."],"correct":0,"explanation":"..."}]}`
                             : `Sen profesyonel bir eğitmensin. Aşağıdaki içerik/görsele dayanarak ${grade} kademesine uygun, ${diff} zorlukta tam ${count} adet bilgi/klasik soru hazırla.`;
 
                         if (directFile) {
@@ -2573,15 +2842,24 @@
                             }];
                         }
 
+                        const reqBody = { contents: requestBodyContents };
+                        if (type === 'test') reqBody.generationConfig = { responseMimeType: 'application/json' };
                         const response = await fetch(geminiUrl(), {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': activeApiKey },
-                            body: JSON.stringify({ contents: requestBodyContents })
+                            body: JSON.stringify(reqBody)
                         });
                         
                         const data = await response.json();
                         
-                        if (data.candidates && data.candidates[0].content.parts[0].text) {
+                        if (data.candidates && data.candidates[0].content.parts[0].text && type === 'test') {
+                            const parsed = parseQuizReply(data.candidates[0].content.parts[0].text);
+                            if (parsed.length === 0) {
+                                studioDisplayBox.innerHTML = `<div class="test-sheet-card" style="border-color:var(--danger);">Yapay zeka soruları beklenen biçimde veremedi. Lütfen tekrar deneyin.</div>`;
+                            } else {
+                                renderQuiz(parsed, sourceTitle, { grade, diff, wanted: count });
+                            }
+                        } else if (data.candidates && data.candidates[0].content.parts[0].text) {
                             const aiReply = data.candidates[0].content.parts[0].text;
                             studioDisplayBox.innerHTML = `
                                 <div class="test-sheet-card" style="border-style: solid;">
