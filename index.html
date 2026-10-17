@@ -799,6 +799,34 @@
         .qz-eval-btn { flex: 1; min-width: 140px; padding: 12px; border-radius: 12px; background: var(--bg-card); color: var(--text-main); border: 1.5px solid var(--border-color); }
         .qz-eval-btn.ok:hover, .qz-eval-btn.ok.on { background: rgba(16,185,129,.18); border-color: var(--success); }
         .qz-eval-btn.bad:hover, .qz-eval-btn.bad.on { background: rgba(239,68,68,.18); border-color: var(--danger); }
+        /* Bilgi / klasik: dönen kart */
+        .fc { perspective: 1400px; cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
+        .fc-inner { display: grid; position: relative; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; transition: transform .65s cubic-bezier(.4,.2,.2,1); }
+        .fc.flipped .fc-inner { transform: rotateY(180deg); }
+        .fc-face {
+            grid-area: 1 / 1; min-height: 280px; padding: 22px 20px; border-radius: 18px;
+            display: flex; flex-direction: column; justify-content: center; gap: 14px;
+            backface-visibility: hidden; -webkit-backface-visibility: hidden; box-sizing: border-box;
+        }
+        .fc-front { background: linear-gradient(160deg, var(--bg-card), #17213b); border: 1.5px solid var(--border-color); }
+        .fc:hover .fc-front, .fc:focus-visible .fc-front { border-color: var(--accent); }
+        .fc-back { background: linear-gradient(160deg, rgba(16,185,129,.16), var(--bg-card)); border: 1.5px solid rgba(16,185,129,.55); transform: rotateY(180deg); }
+        .fc-label { font-size: 11px; font-weight: 700; letter-spacing: .18em; color: var(--accent); }
+        .fc-label.ok { color: #34d399; }
+        .fc-text { font-size: 17px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+        .fc-answer { font-size: 15px; }
+        .fc-kp-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+        .fc-kp { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.6; }
+        .fc-hint { font-size: 12px; color: var(--text-muted); margin-top: auto; padding-top: 6px; }
+        .fc-evalbox { display: flex; flex-direction: column; gap: 10px; }
+        .fc-eval-q { font-size: 13px; font-weight: 600; }
+        .fc-eval { display: flex; gap: 10px; flex-wrap: wrap; }
+        .fc-eval-btn { flex: 1; min-width: 140px; padding: 13px; border-radius: 14px; background: var(--bg-card); color: var(--text-main); border: 1.5px solid var(--border-color); }
+        .fc-eval-btn.ok:hover, .fc-eval-btn.ok.on { background: rgba(16,185,129,.18); border-color: var(--success); }
+        .fc-eval-btn.bad:hover, .fc-eval-btn.bad.on { background: rgba(239,68,68,.18); border-color: var(--danger); }
+        @media (prefers-reduced-motion: reduce) { .fc-inner { transition: none; } }
+        @media (max-width: 768px) { .fc-face { min-height: 300px; padding: 20px 16px; } .fc-text { font-size: 16px; } }
+
         /* Sonuç */
         .qz-res { background: var(--bg-card); border: 1px solid var(--accent); border-radius: 16px; padding: 18px; }
         .qz-res-title { margin: 0 0 14px; font-size: 16px; color: var(--accent); }
@@ -1077,12 +1105,12 @@
     </script>
 
     <div id="updateBanner">
-        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.8) yayınlandı!</span>
+        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.9) yayınlandı!</span>
         <button onclick="window.location.reload()">Şimdi Güncelle</button>
     </div>
 
     <header class="app-header">
-        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.8)</span></h1>
+        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.9)</span></h1>
         <div class="header-actions">
             <button id="installAppBtn" style="display: none; background-color: var(--success); color: #fff; padding: 6px 12px; font-size: 11px; border-radius: 20px;">📲 Yükle</button>
             <div class="action-badge-btn" id="openFriendsModalBtn" title="Arkadaşlarım">
@@ -1469,7 +1497,7 @@
                 <span style="font-size:11px; line-height:1.5;">Ücretsiz anahtar almak için <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--accent);">aistudio.google.com/apikey</a> adresine girin, "Create API key" deyin ve anahtarı buraya yapıştırın. Anahtar yalnızca bu cihazda saklanır, kimseyle paylaşılmaz.</span>
             </div>
 
-            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.8</div>
+            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.9</div>
 
             <div class="modal-actions">
                 <button id="saveSettingsBtn">Kaydet</button>
@@ -1499,7 +1527,7 @@
 
     <script>
         const CENTRAL_GEMINI_API_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN";
-        const APP_VERSION = "v1.0.8";
+        const APP_VERSION = "v1.0.9";
         // Telefonda konsol olmadığı için beklenmeyen hataları ekranda göster
         (function () {
             let box = null, timer = null;
@@ -2670,7 +2698,7 @@
                 // ---- iskelet ----
                 const wrap = el('div', 'qz'); wrap.style.scrollMarginTop = '80px';
                 const topbar = el('div', 'qz-top');
-                topbar.appendChild(el('div', 'qz-title', sourceTitle + (isTest ? ' · Test' : ' · Bilgi Soruları')));
+                topbar.appendChild(el('div', 'qz-title', sourceTitle + (isTest ? ' · Test' : ' · Bilgi Kartları')));
                 const closeBtn = el('button', 'qz-x', '✕'); closeBtn.type = 'button'; closeBtn.title = 'Kapat'; closeBtn.setAttribute('aria-label', 'Kapat');
                 topbar.appendChild(closeBtn); wrap.appendChild(topbar);
 
@@ -2736,40 +2764,61 @@
                     if (finished && !answered) body.appendChild(el('div', 'qz-blank-note', 'Bu soruyu boş bıraktın.'));
                 }
                 function paintClassic(q) {
-                    const ta = document.createElement('textarea');
-                    ta.className = 'qz-ans'; ta.placeholder = 'Cevabını buraya yaz (isteğe bağlı)…'; ta.rows = 4;
-                    ta.value = typed[cur]; ta.disabled = revealed[cur] || finished;
-                    ta.addEventListener('input', () => { typed[cur] = ta.value; });
-                    body.appendChild(ta);
-                    const show = revealed[cur] || finished;
-                    if (!show) {
-                        const rb = el('button', 'qz-reveal', '👁 Cevabı Göster'); rb.type = 'button';
-                        rb.addEventListener('click', () => { revealed[cur] = true; paintBody(); nudge(); });
-                        body.appendChild(rb);
-                        return;
-                    }
-                    const model = el('div', 'qz-model');
-                    model.appendChild(el('span', 'qz-tag ok', '✓ Örnek cevap'));
-                    model.appendChild(el('div', 'qz-model-text', q.answer));
+                    // Dönen kart: ön yüz = soru, arka yüz = cevap
+                    const card = el('div', 'fc' + (revealed[cur] ? ' flipped' : ''));
+                    card.tabIndex = 0; card.setAttribute('role', 'button');
+                    card.setAttribute('aria-label', 'Kartı çevir');
+                    const inner = el('div', 'fc-inner');
+
+                    const front = el('div', 'fc-face fc-front');
+                    front.appendChild(el('div', 'fc-label', 'SORU'));
+                    front.appendChild(el('div', 'fc-text', q.question));
+                    front.appendChild(el('div', 'fc-hint', '↻ Cevabı görmek için karta dokun'));
+
+                    const back = el('div', 'fc-face fc-back');
+                    back.appendChild(el('div', 'fc-label ok', 'CEVAP'));
+                    back.appendChild(el('div', 'fc-text fc-answer', q.answer));
                     if (q.keyPoints && q.keyPoints.length) {
-                        model.appendChild(el('div', 'qz-kp-title', 'Cevapta olması gerekenler'));
-                        const ul = el('ul', 'qz-kp'); q.keyPoints.forEach(k => ul.appendChild(el('li', null, k))); model.appendChild(ul);
+                        back.appendChild(el('div', 'fc-kp-title', 'Cevapta olması gerekenler'));
+                        const ul = el('ul', 'fc-kp'); q.keyPoints.forEach(k => ul.appendChild(el('li', null, k))); back.appendChild(ul);
                     }
-                    body.appendChild(model);
-                    if (!finished) {
-                        body.appendChild(el('div', 'qz-eval-q', 'Cevabın nasıldı?'));
-                        const row = el('div', 'qz-eval');
+                    back.appendChild(el('div', 'fc-hint', '↻ Soruya dönmek için dokun'));
+
+                    inner.appendChild(front); inner.appendChild(back); card.appendChild(inner);
+                    body.appendChild(card);
+
+                    const evalBox = el('div', 'fc-evalbox'); body.appendChild(evalBox);
+                    function paintEval() {
+                        evalBox.textContent = '';
+                        if (finished) {
+                            evalBox.appendChild(el('div', 'qz-blank-note', chosen[cur] === null
+                                ? 'Bu kartı değerlendirmeden geçtin (boş).'
+                                : 'Kendi değerlendirmen: ' + (chosen[cur] === 'ok' ? '✓ Doğru bildim' : '✕ Yanlış bildim')));
+                            return;
+                        }
+                        if (!revealed[cur]) {
+                            evalBox.appendChild(el('div', 'qz-blank-note', 'Önce cevabı düşün, sonra karta dokunup kontrol et.'));
+                            return;
+                        }
+                        evalBox.appendChild(el('div', 'fc-eval-q', 'Cevabın nasıldı?'));
+                        const row = el('div', 'fc-eval');
                         [['ok', '✓ Doğru bildim'], ['bad', '✕ Yanlış bildim']].forEach(([v, label]) => {
-                            const b = el('button', 'qz-eval-btn ' + v + (chosen[cur] === v ? ' on' : ''), label); b.type = 'button';
-                            b.addEventListener('click', () => { chosen[cur] = v; paintBody(); paintProgress(); });
+                            const b = el('button', 'fc-eval-btn ' + v + (chosen[cur] === v ? ' on' : ''), label); b.type = 'button';
+                            b.addEventListener('click', () => { chosen[cur] = v; paintEval(); paintProgress(); });
                             row.appendChild(b);
                         });
-                        body.appendChild(row);
-                    } else if (chosen[cur] === null) {
-                        body.appendChild(el('div', 'qz-blank-note', 'Bu soruyu değerlendirmeden geçtin (boş).'));
-                    } else {
-                        body.appendChild(el('div', 'qz-blank-note', 'Kendi değerlendirmen: ' + (chosen[cur] === 'ok' ? '✓ Doğru bildim' : '✕ Yanlış bildim')));
+                        evalBox.appendChild(row);
                     }
+                    const flip = () => {
+                        revealed[cur] = !revealed[cur];
+                        card.classList.toggle('flipped', revealed[cur]);
+                        paintEval();
+                        if (revealed[cur]) nudge();
+                    };
+                    card.addEventListener('click', flip);
+                    card.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); } });
+                    paintEval();
+                    if (!(window.matchMedia && window.matchMedia('(max-width: 768px)').matches)) card.focus({ preventScroll: true });
                 }
                 function render(scroll) {
                     const showingResult = finished && !reviewing;
