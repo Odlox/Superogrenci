@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title id="pageTitle">Süper Öğrenci & Soru Stüdyosu</title>
     
     <!-- PWA Manifest -->
@@ -15,29 +15,17 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDS6KL1jlYcAA0S-nXvtHb6BnT5kHde2Wc",
-  authDomain: "super-ogrenci.firebaseapp.com",
-  projectId: "super-ogrenci",
-  storageBucket: "super-ogrenci.firebasestorage.app",
-  messagingSenderId: "954668642022",
-  appId: "1:954668642022:web:358f0f0fde760920a41527",
-  measurementId: "G-NFDNR7NL7K"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+        const firebaseConfig = {
+            apiKey: "AIzaSyDS6KL1jlYcAA0S-nXvtHb6BnT5kHde2Wc",
+            authDomain: "super-ogrenci.firebaseapp.com",
+            projectId: "super-ogrenci",
+            storageBucket: "super-ogrenci.firebasestorage.app",
+            messagingSenderId: "954668642022",
+            appId: "1:954668642022:web:358f0f0fde760920a41527",
+            measurementId: "G-NFDNR7NL7K"
+        };
 
         try {
             const app = initializeApp(firebaseConfig);
@@ -45,14 +33,17 @@ const analytics = getAnalytics(app);
             const auth = getAuth(app);
             window.db = db;
             window.auth = auth;
-            window.fbAuthModules = { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+            window.fbAuthModules = { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
             window.fbModules = { doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion };
-            
+            window.firebaseReady = true;
+            window.dispatchEvent(new Event('firebase-ready'));
+
             if (window.initCloudSync) {
                 window.initCloudSync();
             }
         } catch (e) {
-            console.warn("Çevrimdışı mod aktif.");
+            console.warn("Firebase başlatılamadı, çevrimdışı mod aktif.", e);
+            window.firebaseError = e;
             const el = document.getElementById('cloudStatusText');
             if (el) el.textContent = "📴 Çevrimdışı Mod (Yerel)";
         }
@@ -746,32 +737,143 @@ const analytics = getAnalytics(app);
             background-color: #475569;
         }
 
-        /* YALNIZCA TELEFONLAR İÇİN MEDIA QUERY (768px ve altı) */
-        @media (max-width: 768px) {
-            .nav-tabs {
-                display: none !important;
-            }
-            .mobile-bottom-nav {
-                display: flex !important;
-            }
-            body {
-                padding-bottom: 90px !important;
-            }
-            .main-wrapper {
-                flex-direction: column;
-            }
-            .studio-workspace {
-                grid-template-columns: 1fr;
-            }
+        html { -webkit-text-size-adjust: 100%; }
+        button, .nav-tab-btn, .action-badge-btn { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        img, video { max-width: 100%; }
+
+        /* Tablet (769–900px) */
+        @media (max-width: 900px) and (min-width: 769px) {
+            .main-wrapper { flex-direction: column; }
+            .studio-workspace { grid-template-columns: 1fr; }
         }
 
-        @media (max-width: 900px) and (min-width: 769px) {
-            .main-wrapper {
-                flex-direction: column;
+        /* ===== TELEFON DÜZENİ (768px ve altı) ===== */
+        @media (max-width: 768px) {
+            body {
+                padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px calc(100px + env(safe-area-inset-bottom, 0px)) 10px !important;
             }
-            .studio-workspace {
-                grid-template-columns: 1fr;
+            .nav-tabs { display: none !important; }
+            .mobile-bottom-nav {
+                display: flex !important;
+                left: 10px; right: 10px;
+                bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+                padding: 6px 8px;
+                gap: 4px;
             }
+            .mobile-nav-item {
+                flex: 1;
+                min-height: 48px;
+                justify-content: center;
+                padding: 6px 4px;
+                font-size: 11px;
+            }
+            .mobile-nav-item span.nav-icon { font-size: 20px; }
+
+            /* Üst başlık: tek satır, taşma yok */
+            .app-header {
+                position: sticky;
+                top: 0;
+                z-index: 1500;
+                flex-wrap: nowrap;
+                gap: 8px;
+                padding: 10px 12px;
+                margin-bottom: 10px;
+            }
+            .logo-title { font-size: 15px; min-width: 0; white-space: nowrap; }
+            .logo-title span { display: none; }
+            .header-actions { gap: 6px; flex-shrink: 0; }
+            .action-badge-btn { padding: 4px 10px 4px 4px; min-height: 36px; }
+            #openFriendsModalBtn { padding: 4px 10px; }
+            .hide-sm { display: none; }
+            #headerUserName {
+                max-width: 80px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                font-size: 12px;
+            }
+            #installAppBtn { padding: 6px 10px !important; }
+
+            /* Yerleşim: tek sütun */
+            .view-container { gap: 12px; }
+            .main-wrapper { flex-direction: column; gap: 12px; }
+            .left-column { gap: 12px; }
+            .right-column { padding: 12px; gap: 12px; }
+            .top-dashboard { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .dashboard-card { padding: 10px 8px; }
+            .dashboard-card button { min-height: 36px; }
+            .pomodoro-timer { font-size: 26px; }
+            .pomodoro-settings input { font-size: 16px; }
+
+            /* Formlar: iOS yakınlaştırmasını önlemek için 16px, rahat dokunma alanı */
+            input, textarea, select { font-size: 16px; min-height: 44px; }
+            textarea { min-height: 90px; }
+            input[type="checkbox"] { min-height: 0; }
+            input[type="file"] { font-size: 13px; min-height: 0; padding: 8px; }
+            button { min-height: 44px; font-size: 14px; }
+            .form-card { padding: 12px; }
+            .row { flex-direction: column; gap: 8px; }
+            .btn-group { flex-direction: column; gap: 8px; }
+            .btn-group button { flex: none !important; width: 100%; }
+            .filter-search-bar { flex-direction: column; gap: 8px; }
+            .filter-search-bar input, .filter-search-bar select { flex: none; }
+
+            /* Not kartları */
+            .note-card { padding: 12px; }
+            .note-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+            .note-img { max-height: 220px; }
+            .note-footer { flex-direction: column; align-items: flex-start; }
+            .delete-btn { min-height: 36px; padding: 6px 12px; }
+
+            /* Sosyal alan */
+            .social-input-group { flex-direction: column; }
+            .social-input-group input { font-size: 16px; padding: 10px 12px; }
+            .social-input-group button { padding: 10px; font-size: 14px; }
+            .social-list { max-height: 180px; }
+            .social-list-item { padding: 10px; font-size: 13px; gap: 8px; flex-wrap: wrap; }
+            .chat-box { height: 280px; }
+            .chat-messages { font-size: 13px; }
+            .chat-input-area input { font-size: 16px; padding: 10px; min-height: 44px; }
+            .chat-input-area button { font-size: 14px; padding: 0 16px; }
+
+            /* Stüdyo / Program */
+            .studio-container { padding: 12px; gap: 12px; }
+            .studio-header-banner { flex-direction: column; align-items: flex-start; }
+            .studio-title { font-size: 16px; }
+            .studio-workspace { grid-template-columns: 1fr; gap: 12px; }
+            .studio-controls-box, .studio-display-box { padding: 12px; }
+            .studio-display-box { min-height: 260px; max-height: none; overflow-y: visible; }
+            .test-sheet-card { padding: 12px; }
+            .test-option-item { padding: 12px; font-size: 14px; }
+
+            /* Pencereler: alttan açılan sayfa gibi */
+            .modal-overlay { align-items: flex-end; padding: 0; }
+            .modal-card {
+                max-width: 100%;
+                max-height: 92vh;
+                max-height: 92dvh;
+                border-radius: 18px 18px 0 0;
+                padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+            }
+            #authModal { align-items: center; padding: 12px; }
+            #authModal .modal-card { border-radius: 16px; max-width: 420px; }
+            .modal-actions { flex-direction: column-reverse; }
+            .color-presets-grid { grid-template-columns: repeat(5, 1fr); }
+            .color-swatch { height: 40px; }
+        }
+
+        /* Çok dar telefonlar (≤380px) */
+        @media (max-width: 380px) {
+            .top-dashboard { grid-template-columns: 1fr; }
+            .logo-title { font-size: 14px; }
+            #headerUserName { display: none; }
+        }
+
+        /* Yatay telefon */
+        @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+            .mobile-bottom-nav { padding: 2px 8px; }
+            .mobile-nav-item { min-height: 40px; flex-direction: row; gap: 6px; }
+            .modal-card { max-height: 96vh; }
         }
     </style>
 </head>
@@ -787,7 +889,7 @@ const analytics = getAnalytics(app);
         <div class="header-actions">
             <button id="installAppBtn" style="display: none; background-color: var(--success); color: #fff; padding: 6px 12px; font-size: 11px; border-radius: 20px;">📲 Yükle</button>
             <div class="action-badge-btn" id="openFriendsModalBtn" title="Arkadaşlarım">
-                <span>👥 Arkadaşlarım</span>
+                <span>👥<span class="hide-sm"> Arkadaşlarım</span></span>
             </div>
             <div class="action-badge-btn" id="openSettingsModalBtn" title="Profil Ayarları">
                 <span id="headerUserName">Öğrenci</span>
@@ -1156,6 +1258,15 @@ const analytics = getAnalytics(app);
                 </div>
             </div>
 
+            <div class="modal-field">
+                <label>🔑 Gemini API Anahtarım (yapay zeka özellikleri için):</label>
+                <div style="display:flex; gap:6px;">
+                    <input type="password" id="modalApiKeyInput" placeholder="AIza..." autocomplete="off" spellcheck="false">
+                    <button type="button" id="toggleApiKeyBtn" class="secondary-btn" style="flex-shrink:0; padding:0 12px;" title="Göster/Gizle">👁️</button>
+                </div>
+                <span style="font-size:11px; line-height:1.5;">Ücretsiz anahtar almak için <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--accent);">aistudio.google.com/apikey</a> adresine girin, "Create API key" deyin ve anahtarı buraya yapıştırın. Anahtar yalnızca bu cihazda saklanır, kimseyle paylaşılmaz.</span>
+            </div>
+
             <div class="modal-actions">
                 <button id="saveSettingsBtn">Kaydet</button>
                 <button id="logoutBtn" style="background-color: var(--danger); color: white;">Çıkış Yap</button>
@@ -1185,6 +1296,29 @@ const analytics = getAnalytics(app);
     <script>
         const CENTRAL_GEMINI_API_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN";
         const APP_VERSION = "v1.0.7";
+        const GEMINI_MODEL = "gemini-3.8-flash";
+        function getGeminiKey() {
+            let k = '';
+            try { k = (localStorage.getItem('userGeminiApiKey') || '').trim(); } catch (e) {}
+            if (!k && CENTRAL_GEMINI_API_KEY && CENTRAL_GEMINI_API_KEY !== "BURAYA_API_ANAHTARINIZI_YAZIN") k = CENTRAL_GEMINI_API_KEY.trim();
+            return k;
+        }
+        function geminiErrorText(data) {
+            const e = data && data.error;
+            if (!e) return 'Yapay zeka yanıt oluşturamadı.';
+            if (e.status === 'INVALID_ARGUMENT' && /API key/i.test(e.message || '')) return 'API anahtarı geçersiz. Profil Ayarları\'ndan anahtarı kontrol edin.';
+            if (e.status === 'RESOURCE_EXHAUSTED' || e.code === 429) return 'Ücretsiz kullanım kotası doldu. Biraz bekleyip tekrar deneyin.';
+            if (e.status === 'PERMISSION_DENIED') return 'Bu anahtarın izni yok. Yeni bir anahtar oluşturup deneyin.\n\nGoogle\'ın mesajı: ' + (e.message || '');
+            return e.message || 'Yapay zeka hatası.';
+        }
+        function geminiUrl() {
+            return `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+        }
+        function askForApiKey() {
+            alert('Yapay zeka özellikleri için kendi Gemini API anahtarınızı girmeniz gerekiyor.\n\nSağ üstteki profil butonuna dokunun → "Gemini API Anahtarım" alanına yapıştırın. Ücretsiz anahtar: aistudio.google.com/apikey');
+            const b = document.getElementById('openSettingsModalBtn');
+            if (b) b.click();
+        }
 
         let deferredPrompt = null;
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -1317,26 +1451,92 @@ const analytics = getAnalytics(app);
             const authPassword = document.getElementById('authPassword');
             const logoutBtn = document.getElementById('logoutBtn');
 
-            if (window.auth && window.fbAuthModules) {
+            let authListenerAttached = false;
+            function attachAuthListener() {
+                if (authListenerAttached || !window.auth || !window.fbAuthModules) return;
+                authListenerAttached = true;
                 window.fbAuthModules.onAuthStateChanged(window.auth, (user) => {
                     if (user) {
-                        userProfile.name = user.displayName || user.email.split('@')[0];
+                        const mail = user.email || '';
+                        userProfile.name = user.displayName || (mail ? mail.split('@')[0] : 'Öğrenci');
                         userProfile.id = 'STU-' + user.uid.substring(0, 6).toUpperCase();
                         localStorage.setItem('studentProfile', JSON.stringify(userProfile));
-                        if(authModal) authModal.style.display = 'none';
+                        if (authModal) authModal.style.display = 'none';
                         updateHeaderProfile();
                         initRealtimeListener();
                     }
                 });
+                // Yönlendirme ile giriş (telefon) sonrası dönüş sonucunu yakala
+                window.fbAuthModules.getRedirectResult(window.auth).catch((e) => {
+                    showAuthError(e);
+                });
+            }
+            attachAuthListener();
+            window.addEventListener('firebase-ready', attachAuthListener);
+
+            function authErrorMessage(e) {
+                const code = (e && e.code) || '';
+                switch (code) {
+                    case 'auth/unauthorized-domain':
+                        return 'Bu sitenin adresi (' + location.hostname + ') Firebase\'de yetkili alan adları arasında değil.\n\nÇözüm: Firebase Console → Authentication → Settings → Authorized domains → "Add domain" ile ' + location.hostname + ' adresini ekleyin.';
+                    case 'auth/operation-not-allowed':
+                        return 'Google girişi Firebase\'de etkin değil.\n\nÇözüm: Firebase Console → Authentication → Sign-in method → Google → Enable.';
+                    case 'auth/popup-closed-by-user':
+                    case 'auth/cancelled-popup-request':
+                        return 'Giriş penceresi kapatıldı. Tekrar deneyin.';
+                    case 'auth/network-request-failed':
+                        return 'İnternet bağlantısı hatası. Bağlantınızı kontrol edip tekrar deneyin.';
+                    case 'auth/web-storage-unsupported':
+                        return 'Tarayıcınız çerez/depolamayı engelliyor. Çerezleri açın veya Chrome/Safari ile deneyin.';
+                    case 'auth/too-many-requests':
+                        return 'Çok fazla deneme yapıldı. Biraz bekleyip tekrar deneyin.';
+                    default:
+                        return (e && e.message) ? e.message : 'Bilinmeyen hata';
+                }
+            }
+            function showAuthError(e) {
+                const code = (e && e.code) || '';
+                if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
+                alert('Google ile giriş hatası:\n' + authErrorMessage(e));
+            }
+
+            function isInAppBrowser() {
+                const ua = navigator.userAgent || '';
+                return /FBAN|FBAV|Instagram|Line\/|Twitter|TikTok|Snapchat|; wv\)|WebView/i.test(ua);
             }
 
             if (googleLoginBtn) {
                 googleLoginBtn.addEventListener('click', async () => {
+                    if (location.protocol === 'file:') {
+                        alert('Google girişi dosya olarak açılan sayfada çalışmaz. Uygulamayı https:// adresinden (örn. Firebase Hosting, GitHub Pages, Netlify) açın.');
+                        return;
+                    }
+                    if (!window.auth || !window.fbAuthModules) {
+                        const why = window.firebaseError ? (window.firebaseError.message || window.firebaseError) : 'Firebase kütüphanesi yüklenemedi (internet veya reklam engelleyici olabilir).';
+                        alert('Giriş servisi başlatılamadı: ' + why);
+                        return;
+                    }
+                    if (isInAppBrowser()) {
+                        alert('Google, uygulama içi tarayıcılardan girişe izin vermez. Sağ üstten "Tarayıcıda aç" diyerek Chrome/Safari ile açın.');
+                        return;
+                    }
+                    const provider = new window.fbAuthModules.GoogleAuthProvider();
+                    provider.setCustomParameters({ prompt: 'select_account' });
+                    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches;
                     try {
-                        const provider = new window.fbAuthModules.GoogleAuthProvider();
+                        if (isMobile) {
+                            // Telefonlarda popup sık engellendiği için yönlendirme kullan
+                            await window.fbAuthModules.signInWithRedirect(window.auth, provider);
+                            return;
+                        }
                         await window.fbAuthModules.signInWithPopup(window.auth, provider);
-                        if(authModal) authModal.style.display = 'none';
-                    } catch(e) { alert('Google ile giriş hatası: ' + e.message); }
+                        if (authModal) authModal.style.display = 'none';
+                    } catch (e) {
+                        if (!isMobile && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) {
+                            try { await window.fbAuthModules.signInWithRedirect(window.auth, provider); return; } catch (e2) { showAuthError(e2); return; }
+                        }
+                        showAuthError(e);
+                    }
                 });
             }
 
@@ -1348,7 +1548,7 @@ const analytics = getAnalytics(app);
                     try {
                         await window.fbAuthModules.signInWithEmailAndPassword(window.auth, email, pass);
                         if(authModal) authModal.style.display = 'none';
-                    } catch(e) { alert('Giriş başarısız: ' + e.message); }
+                    } catch(e) { alert('Giriş başarısız: ' + authErrorMessage(e)); }
                 });
             }
 
@@ -1360,7 +1560,7 @@ const analytics = getAnalytics(app);
                     try {
                         await window.fbAuthModules.createUserWithEmailAndPassword(window.auth, email, pass);
                         if(authModal) authModal.style.display = 'none';
-                    } catch(e) { alert('Kayıt olma başarısız: ' + e.message); }
+                    } catch(e) { alert('Kayıt olma başarısız: ' + authErrorMessage(e)); }
                 });
             }
 
@@ -1375,7 +1575,10 @@ const analytics = getAnalytics(app);
                     if (window.auth) {
                         await window.fbAuthModules.signOut(window.auth);
                     }
+                    let savedKey = null;
+                    try { savedKey = localStorage.getItem('userGeminiApiKey'); } catch(e) {}
                     localStorage.clear();
+                    if (savedKey) { try { localStorage.setItem('userGeminiApiKey', savedKey); } catch(e) {} }
                     window.location.reload();
                 });
             }
@@ -1656,9 +1859,9 @@ const analytics = getAnalytics(app);
                         return;
                     }
 
-                    const activeApiKey = CENTRAL_GEMINI_API_KEY;
-                    if (!activeApiKey || activeApiKey === "BURAYA_API_ANAHTARINIZI_YAZIN" || activeApiKey.trim() === '') {
-                        alert('Yapay zeka anahtarı girilmemiş!');
+                    const activeApiKey = getGeminiKey();
+                    if (!activeApiKey) {
+                        askForApiKey();
                         return;
                     }
 
@@ -1667,15 +1870,15 @@ const analytics = getAnalytics(app);
 
                     try {
                         const reader = new FileReader();
-                        reader.onload = async function(e) {
+                        reader.onload = async function(e) { try {
                             const base64Data = e.target.result.split(',')[1];
                             const mimeType = file.type || 'image/jpeg';
 
                             const promptText = `Bu görseldeki haftalık ders programını analiz et. İçindeki tüm dersleri çıkar ve SADECE saf bir JSON dizisi (array) formatında ver. Başka hiçbir açıklama, markdown blok işareti ekleme. Her nesnenin şu anahtarları olsun: "name", "day", "time", "notifyBefore" (10).`;
 
-                            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeApiKey.trim()}`, {
+                            const response = await fetch(geminiUrl(), {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': activeApiKey },
                                 body: JSON.stringify({
                                     contents: [{
                                         parts: [
@@ -1716,8 +1919,14 @@ const analytics = getAnalytics(app);
                                     scheduleImageInput.value = '';
                                     alert(`Tebrikler! Fotoğraftan başarıyla ${addedCount} adet ders programa eklendi.`);
                                 }
+                            } else {
+                                alert(geminiErrorText(data));
                             }
-                        };
+                        } catch (err2) {
+                            importScheduleImageBtn.textContent = '🤖 Fotoğrafı Yapay Zeka ile Tara & Ekle';
+                            importScheduleImageBtn.disabled = false;
+                            alert('Fotoğraf okunamadı veya yapay zeka beklenen formatta yanıt vermedi. Daha net bir fotoğrafla tekrar deneyin.');
+                        } };
                         reader.readAsDataURL(file);
                     } catch (err) {
                         importScheduleImageBtn.textContent = '🤖 Fotoğrafı Yapay Zeka ile Tara & Ekle';
@@ -2107,9 +2316,9 @@ const analytics = getAnalytics(app);
                     const count = parseInt(studioQuestionCount.value) || 10;
                     const diff = studioDifficulty.value;
 
-                    const activeApiKey = CENTRAL_GEMINI_API_KEY;
-                    if (!activeApiKey || activeApiKey === "BURAYA_API_ANAHTARINIZI_YAZIN" || activeApiKey.trim() === '') {
-                        alert('Lütfen geçerli bir Gemini API anahtarı girin!');
+                    const activeApiKey = getGeminiKey();
+                    if (!activeApiKey) {
+                        askForApiKey();
                         return;
                     }
 
@@ -2165,9 +2374,9 @@ const analytics = getAnalytics(app);
                             }];
                         }
 
-                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeApiKey.trim()}`, {
+                        const response = await fetch(geminiUrl(), {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': activeApiKey },
                             body: JSON.stringify({ contents: requestBodyContents })
                         });
                         
@@ -2184,7 +2393,7 @@ const analytics = getAnalytics(app);
                                 </div>
                             `;
                         } else {
-                            studioDisplayBox.innerHTML = `<div class="test-sheet-card" style="border-color:var(--danger);">Yapay zeka yanıt oluşturamadı. Lütfen API anahtarınızı kontrol edin.</div>`;
+                            studioDisplayBox.innerHTML = `<div class="test-sheet-card" style="border-color:var(--danger);">${escapeHtml(geminiErrorText(data))}</div>`;
                         }
                     } catch (err) {
                         studioDisplayBox.innerHTML = `<div class="test-sheet-card" style="border-color:var(--danger);">Dosya analiz edilirken bir hata oluştu.</div>`;
@@ -2223,6 +2432,8 @@ const analytics = getAnalytics(app);
                 openSettingsModalBtn.addEventListener('click', () => {
                     if(modalNameInput) modalNameInput.value = userProfile.name;
                     if(modalDisplayId) modalDisplayId.textContent = userProfile.id;
+                    const apiIn = document.getElementById('modalApiKeyInput');
+                    if (apiIn) { try { apiIn.value = localStorage.getItem('userGeminiApiKey') || ''; } catch(e) {} apiIn.type = 'password'; }
                     tempSelectedColor = userProfile.accentColor || '#38bdf8';
                     updateSwatchActiveState(tempSelectedColor);
                     if(settingsModal) settingsModal.style.display = 'flex';
@@ -2238,10 +2449,15 @@ const analytics = getAnalytics(app);
                 });
             }
 
+            const toggleApiKeyBtn = document.getElementById('toggleApiKeyBtn');
+            if (toggleApiKeyBtn) toggleApiKeyBtn.addEventListener('click', () => { const i = document.getElementById('modalApiKeyInput'); if (i) i.type = i.type === 'password' ? 'text' : 'password'; });
+
             if(closeModalBtn) closeModalBtn.addEventListener('click', () => { if(settingsModal) settingsModal.style.display = 'none'; });
 
             if (saveSettingsBtn) {
                 saveSettingsBtn.addEventListener('click', () => {
+                    const apiIn = document.getElementById('modalApiKeyInput');
+                    if (apiIn) { try { const v = apiIn.value.trim(); if (v) localStorage.setItem('userGeminiApiKey', v); else localStorage.removeItem('userGeminiApiKey'); } catch(e) {} }
                     const newName = modalNameInput.value.trim();
                     if (newName) {
                         userProfile.name = newName;
