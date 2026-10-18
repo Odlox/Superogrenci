@@ -7,14 +7,27 @@
     
     <!-- PWA Manifest -->
     <link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"Süper Öğrenci Çalışma Programı","short_name":"SüperÖğrenci","start_url":".","display":"standalone","background_color":"%230f172a","theme_color":"%2338bdf8","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2921/2921222.png","sizes":"512x512","type":"image/png"}]}'>
-    <meta name="theme-color" content="#38bdf8">
+    <meta name="theme-color" content="#0d0f1c">
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('appTheme');
+                if (t === 'gunes') document.documentElement.setAttribute('data-theme', t);
+                var m = document.querySelector('meta[name="theme-color"]');
+                if (m) m.setAttribute('content', t === 'gunes' ? '#f3f4fb' : '#0d0f1c');
+            } catch (e) {}
+        })();
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Firebase SDK'ları -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -37,6 +50,7 @@
             window.auth = auth;
             window.fbAuthModules = { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
             window.fbModules = { doc, setDoc, getDoc, onSnapshot, updateDoc, arrayUnion };
+            window.fbMessagingLib = { getMessaging, getToken, app };
             window.firebaseReady = true;
             window.dispatchEvent(new Event('firebase-ready'));
 
@@ -53,17 +67,31 @@
 
     <style>
         :root {
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --bg-input: #0f172a;
-            --border-color: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #38bdf8;
-            --accent-hover: #0ea5e9;
-            --danger: #ef4444;
-            --danger-hover: #dc2626;
-            --success: #10b981;
+            /* Varsayılan tema: Gece Moru */
+            --bg-main: #0d0f1c;
+            --bg-card: #161a2e;
+            --bg-input: #0d0f1c;
+            --border-color: #262c4a;
+            --text-main: #eef0ff;
+            --text-muted: #9097b8;
+            --accent: #8b7cf6;
+            --accent-hover: #7767ea;
+            --danger: #f0586b;
+            --danger-hover: #dc4357;
+            --success: #2fc99a;
+            --splash-1: #1c1740; --splash-2: #0f0d24; --splash-3: #07060f;
+            --radius: 14px;
+            --shadow-card: 0 8px 28px rgba(5, 6, 20, .45);
+            --page-glow: radial-gradient(900px 500px at 85% -10%, rgba(139,124,246,.18), transparent 60%), radial-gradient(700px 420px at -10% 10%, rgba(47,201,154,.08), transparent 55%);
+        }
+        :root[data-theme="gunes"] {
+            --bg-main: #f3f4fb; --bg-card: #ffffff; --bg-input: #f3f4fb; --border-color: #dcdff0;
+            --text-main: #1a1d33; --text-muted: #666c8c;
+            --accent: #6a5cf0; --accent-hover: #5646e0;
+            --danger: #e0435a; --danger-hover: #c93249; --success: #12a77a;
+            --splash-1: #e6e3ff; --splash-2: #f3f4fb; --splash-3: #ffffff;
+            --shadow-card: 0 8px 26px rgba(60, 60, 120, .12);
+            --page-glow: radial-gradient(900px 500px at 85% -10%, rgba(106,92,240,.14), transparent 60%);
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -751,7 +779,7 @@
         .qz-segs { display: flex; gap: 4px; flex: 1; min-width: 140px; }
         .qz-seg { flex: 1; height: 5px; min-height: 0; padding: 0; border-radius: 4px; background: var(--border-color); position: relative; }
         .qz-seg::after { content: ''; position: absolute; inset: -10px 0; }  /* dokunma alanı */
-        .qz-seg:hover { background: #475569; }
+        .qz-seg:hover { background: color-mix(in srgb, var(--text-muted) 40%, var(--bg-card)); }
         .qz-seg.cur { background: var(--text-muted); }
         .qz-seg.ok { background: var(--success); } .qz-seg.bad { background: var(--danger); }
         .qz-seg.cur.ok, .qz-seg.cur.bad { box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
@@ -784,7 +812,7 @@
         .qz-foot { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
         .qz-nav { padding: 12px 22px; border-radius: 22px; font-size: 14px; }
         .qz-nav.back { background: var(--border-color); color: var(--text-main); }
-        .qz-nav.back:hover:not(:disabled) { background: #475569; }
+        .qz-nav.back:hover:not(:disabled) { background: color-mix(in srgb, var(--text-muted) 40%, var(--bg-card)); }
         .qz-nav.back:disabled { opacity: .4; cursor: default; }
         .qz-nav.next { background: var(--accent); color: var(--bg-main); }
         /* Bilgi / klasik */
@@ -808,7 +836,7 @@
             display: flex; flex-direction: column; justify-content: center; gap: 14px;
             backface-visibility: hidden; -webkit-backface-visibility: hidden; box-sizing: border-box;
         }
-        .fc-front { background: linear-gradient(160deg, var(--bg-card), #17213b); border: 1.5px solid var(--border-color); }
+        .fc-front { background: linear-gradient(160deg, var(--bg-card), color-mix(in srgb, var(--accent) 10%, var(--bg-card))); border: 1.5px solid var(--border-color); }
         .fc:hover .fc-front, .fc:focus-visible .fc-front { border-color: var(--accent); }
         .fc-back { background: linear-gradient(160deg, rgba(16,185,129,.16), var(--bg-card)); border: 1.5px solid rgba(16,185,129,.55); transform: rotateY(180deg); }
         .fc-label { font-size: 11px; font-weight: 700; letter-spacing: .18em; color: var(--accent); }
@@ -861,7 +889,7 @@
         #introSplash {
             position: fixed; inset: 0; z-index: 10000;
             display: flex; align-items: center; justify-content: center;
-            background: radial-gradient(120% 90% at 50% 40%, #16264a 0%, #0b1226 55%, #050810 100%);
+            background: radial-gradient(120% 90% at 50% 40%, var(--splash-1) 0%, var(--splash-2) 55%, var(--splash-3) 100%);
             overflow: hidden;
             transition: opacity .6s ease, transform .6s ease, visibility .6s;
             /* JS çalışmasa bile en geç 5 sn sonra kendiliğinden kapanır */
@@ -1027,7 +1055,7 @@
             }
             #authModal {
                 flex-direction: column; justify-content: flex-end; align-items: stretch; padding: 0;
-                background: radial-gradient(120% 70% at 50% 18%, #16264a 0%, #0b1226 60%, #050810 100%);
+                background: radial-gradient(120% 70% at 50% 18%, var(--splash-1) 0%, var(--splash-2) 60%, var(--splash-3) 100%);
             }
             .auth-hero {
                 display: flex; flex: 1; min-height: 0; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
@@ -1055,6 +1083,126 @@
             .mobile-bottom-nav { padding: 2px 8px; }
             .mobile-nav-item { min-height: 40px; flex-direction: row; gap: 6px; }
             .modal-card { max-height: 96vh; }
+        }
+
+        /* ===== MODERN ARAYÜZ (v2) ===== */
+        :root {
+            --accent-2: color-mix(in srgb, var(--accent) 65%, #ff7ad9);
+            --ease: cubic-bezier(.2, .8, .2, 1);
+            --r-lg: 22px; --r-md: 16px; --r-sm: 12px;
+            --card-bg: linear-gradient(180deg, color-mix(in srgb, #ffffff 4%, var(--bg-card)), var(--bg-card));
+            --hairline: color-mix(in srgb, var(--border-color) 70%, transparent);
+            --glass: color-mix(in srgb, var(--bg-card) 72%, transparent);
+        }
+        html { scroll-behavior: smooth; }
+        ::selection { background: color-mix(in srgb, var(--accent) 40%, transparent); }
+        body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background-image: var(--page-glow); background-attachment: fixed; -webkit-font-smoothing: antialiased; letter-spacing: -.005em; }
+        * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--text-muted) 40%, transparent) transparent; }
+
+        /* --- Üst bar: cam efektli, yapışkan --- */
+        .app-header { position: sticky; top: 8px; z-index: 1500; background: var(--glass); backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5); border: 1px solid var(--hairline); border-radius: 20px; box-shadow: var(--shadow-card); padding: 10px 14px; }
+        .logo-title { font-weight: 800; letter-spacing: -.02em; background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .logo-title span { -webkit-text-fill-color: var(--text-muted) !important; font-weight: 500; }
+        .action-badge-btn { background: color-mix(in srgb, var(--text-main) 6%, transparent); border: 1px solid var(--hairline); border-radius: 999px; transition: background .2s, transform .15s var(--ease), border-color .2s; }
+        .action-badge-btn:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+        .action-badge-btn:active { transform: scale(.96); }
+        .avatar-circle { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 45%, transparent); }
+
+        /* --- Üst sekmeler: kayan hap göstergeli segment kontrol --- */
+        .nav-tabs { position: relative; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--hairline); border-radius: 999px; padding: 5px; gap: 4px; width: 100%; box-sizing: border-box; }
+        .nav-tab-btn { position: relative; z-index: 1; background: transparent !important; border: none !important; box-shadow: none !important; color: var(--text-muted); border-radius: 999px; padding: 11px 10px; font-weight: 600; font-size: 13.5px; transition: color .25s; }
+        .nav-tab-btn:hover { color: var(--text-main); }
+        .nav-tab-btn.active { color: #fff; }
+        .nav-indicator { position: absolute; top: 0; left: 0; z-index: 0; border-radius: 999px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 40%, transparent); transition: transform .45s var(--ease), width .45s var(--ease), height .45s var(--ease); pointer-events: none; }
+        .mobile-bottom-nav .nav-indicator { background: color-mix(in srgb, var(--accent) 22%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent); }
+
+        /* --- Alt menü (telefon): yüzen cam hap --- */
+        .mobile-bottom-nav { background: var(--glass); backdrop-filter: blur(22px) saturate(1.6); -webkit-backdrop-filter: blur(22px) saturate(1.6); border: 1px solid var(--hairline); border-radius: 28px; box-shadow: 0 14px 40px rgba(0,0,0,.35); }
+        .mobile-nav-item { position: relative; z-index: 1; background: transparent !important; color: var(--text-muted); border-radius: 22px; font-weight: 600; transition: color .25s; }
+        .mobile-nav-item.active { background: transparent !important; color: var(--accent); }
+        .mobile-nav-item .nav-icon { transition: transform .35s var(--ease); display: inline-block; }
+        .mobile-nav-item.active .nav-icon { transform: translateY(-2px) scale(1.18); }
+
+        /* --- Sayfa geçişi --- */
+        .view-container.active { animation: viewIn .42s var(--ease) both; }
+        @keyframes viewIn { from { opacity: 0; transform: translateY(16px) scale(.992); } to { opacity: 1; transform: none; } }
+        .view-container.active .top-dashboard > *, .view-container.active .left-column > *, .view-container.active .right-column { animation: riseIn .5s var(--ease) both; }
+        .view-container.active .top-dashboard > *:nth-child(2), .view-container.active .left-column > *:nth-child(2) { animation-delay: .06s; }
+        .view-container.active .left-column > *:nth-child(3), .view-container.active .right-column { animation-delay: .12s; }
+        @keyframes riseIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+        /* --- Kartlar --- */
+        .form-card, .dashboard-card, .right-column, .studio-container, .studio-controls-box, .studio-display-box, .test-sheet-card { background: var(--card-bg); border: 1px solid var(--hairline); border-radius: var(--r-lg); box-shadow: var(--shadow-card); }
+        .studio-controls-box, .studio-display-box { border-radius: var(--r-md); box-shadow: none; background: color-mix(in srgb, var(--bg-main) 35%, var(--bg-card)); }
+        .dashboard-card { border-radius: var(--r-md); }
+        .note-card { background: var(--card-bg); border: 1px solid var(--hairline); border-left-width: 4px; border-radius: var(--r-md); box-shadow: 0 6px 20px rgba(5,6,20,.18); transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s; }
+        .note-card:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(5,6,20,.3); }
+        .badge { border-radius: 999px; padding: 3px 9px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--text-muted); font-weight: 600; }
+        .pomodoro-timer { font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: -.02em; background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .test-option-item, .social-list-item { border-radius: var(--r-sm); transition: transform .2s var(--ease), border-color .2s, background .2s; }
+        .test-option-item:hover, .social-list-item:hover { transform: translateX(3px); border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+        .chat-messages, .chat-box { border-radius: var(--r-md); }
+        .chat-msg { border-radius: 14px; }
+
+        /* --- Düğmeler --- */
+        button, .nav-tab-btn, .action-badge-btn, .mobile-nav-item { position: relative; overflow: hidden; }
+        button { border-radius: var(--r-sm); font-weight: 600; letter-spacing: 0; transition: transform .15s var(--ease), box-shadow .2s, filter .2s, background .2s; }
+        button:not([class]):not([style*="background"]) { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 32%, transparent), inset 0 1px 0 rgba(255,255,255,.22); }
+        button:not([class]):not([style*="background"]):hover { background: linear-gradient(135deg, var(--accent-hover), var(--accent-2)); transform: translateY(-1px); box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 42%, transparent), inset 0 1px 0 rgba(255,255,255,.22); }
+        button:active { transform: scale(.97) !important; }
+        button:focus-visible, .nav-tab-btn:focus-visible, .action-badge-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        button[style*="background"] { box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+        .secondary-btn { background: color-mix(in srgb, var(--accent) 12%, var(--bg-card)); color: var(--text-main); border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent); box-shadow: none; }
+        .secondary-btn:hover { background: color-mix(in srgb, var(--accent) 22%, var(--bg-card)); }
+        .delete-btn { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent); border-radius: 999px; box-shadow: none; }
+        .delete-btn:hover { background: color-mix(in srgb, var(--danger) 24%, transparent); }
+        .mic-btn { background: color-mix(in srgb, var(--accent) 10%, var(--bg-input)); color: var(--accent); border: 1.5px solid color-mix(in srgb, var(--accent) 55%, transparent); box-shadow: none; }
+        .mic-btn:hover { background: color-mix(in srgb, var(--accent) 20%, var(--bg-input)); }
+        .ripple { position: absolute; border-radius: 50%; background: currentColor; opacity: .28; transform: scale(0); animation: ripple .6s var(--ease) forwards; pointer-events: none; }
+        @keyframes ripple { to { transform: scale(1); opacity: 0; } }
+
+        /* --- Form alanları --- */
+        input, textarea, select { border-radius: var(--r-sm); background: color-mix(in srgb, var(--text-main) 4%, var(--bg-input)); border: 1px solid var(--hairline); transition: border-color .2s, box-shadow .2s, background .2s; }
+        input:hover, textarea:hover, select:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--border-color)); }
+        input:focus, textarea:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); background: var(--bg-input); }
+        input[type="checkbox"]:not(#keepAwakeChk) { accent-color: var(--accent); }
+        /* Aç/kapa anahtarı (iOS tarzı) */
+        input#keepAwakeChk { -webkit-appearance: none; appearance: none; width: 46px !important; height: 28px !important; min-height: 0 !important; padding: 0; border-radius: 999px; background: color-mix(in srgb, var(--text-muted) 40%, transparent); border: none; position: relative; flex-shrink: 0; cursor: pointer; transition: background .25s; box-shadow: none; }
+        input#keepAwakeChk::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.3); transition: transform .3s var(--ease); }
+        input#keepAwakeChk:checked { background: var(--accent); }
+        input#keepAwakeChk:checked::after { transform: translateX(18px); }
+
+        /* --- Pencereler --- */
+        .modal-overlay { background: rgba(6, 7, 20, .55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+        .modal-overlay[style*="flex"], .modal-overlay.active, .modal-overlay.open { animation: fadeBg .25s ease both; }
+        .modal-card { background: var(--card-bg); border: 1px solid var(--hairline); border-radius: 26px; box-shadow: 0 30px 80px rgba(0,0,0,.5); animation: popIn .35s var(--ease) both; }
+        .modal-card h2 { font-weight: 800; letter-spacing: -.01em; }
+        @keyframes fadeBg { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { from { opacity: 0; transform: translateY(18px) scale(.96); } to { opacity: 1; transform: none; } }
+        @keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+        .color-swatch { border-radius: 14px; transition: transform .2s var(--ease), box-shadow .2s; }
+        .color-swatch:hover { transform: scale(1.08); }
+        .theme-picker { display: flex; gap: 8px; }
+        .theme-opt { flex: 1; padding: 12px 6px; border-radius: 16px; border: 2px solid var(--hairline); background: color-mix(in srgb, var(--text-main) 4%, var(--bg-input)); color: var(--text-main); font-size: 12px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: none; transition: transform .2s var(--ease), border-color .2s, box-shadow .2s; }
+        .theme-opt:hover { transform: translateY(-2px); }
+        .theme-opt.active { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); }
+        .theme-dot { width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255,255,255,.18); box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+
+        /* --- Karşılama satırı --- */
+        .hello-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 2px 6px 0; flex-wrap: wrap; }
+        .hello-row h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+        .hello-row h2 span { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .hello-row small { color: var(--text-muted); font-size: 12.5px; }
+
+        @media (max-width: 768px) {
+            .app-header { top: calc(env(safe-area-inset-top, 0px) + 6px); border-radius: 18px; }
+            .mobile-bottom-nav { border-radius: 28px; padding: 6px; }
+            .modal-card { animation: sheetUp .42s var(--ease) both; border-radius: 28px 28px 0 0; position: relative; padding-top: 26px; }
+            .modal-card::before { content: ''; position: absolute; top: 8px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 4px; background: color-mix(in srgb, var(--text-muted) 55%, transparent); }
+            .hello-row h2 { font-size: 20px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
         }
     </style>
 </head>
@@ -1105,12 +1253,12 @@
     </script>
 
     <div id="updateBanner">
-        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.9) yayınlandı!</span>
+        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.17) yayınlandı!</span>
         <button onclick="window.location.reload()">Şimdi Güncelle</button>
     </div>
 
     <header class="app-header">
-        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.9)</span></h1>
+        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.17)</span></h1>
         <div class="header-actions">
             <button id="installAppBtn" style="display: none; background-color: var(--success); color: #fff; padding: 6px 12px; font-size: 11px; border-radius: 20px;">📲 Yükle</button>
             <div class="action-badge-btn" id="openFriendsModalBtn" title="Arkadaşlarım">
@@ -1150,7 +1298,8 @@
     <div id="notesView" class="view-container active">
         <div class="main-wrapper">
             <div class="left-column">
-                <div class="top-dashboard">
+                <div class="hello-row" id="helloRow"><h2>Merhaba, <span id="helloName">öğrenci</span> 👋</h2><small id="helloDate"></small></div>
+            <div class="top-dashboard">
                     <div class="dashboard-card">
                         <span style="font-size: 12px; color: var(--text-muted);">🍅 Pomodoro Sayacı</span>
                         <div class="pomodoro-settings">
@@ -1323,6 +1472,21 @@
 
             <div class="studio-workspace">
                 <div class="studio-controls-box">
+                    <div class="modal-field" style="background: var(--bg-card); padding: 12px; border-radius: 10px; gap: 8px;">
+                        <label><b>🔔 Bildirim Durumu</b></label>
+                        <div id="notifyStatus" style="font-size: 12px; line-height: 1.5;"></div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button id="enableNotifyBtn" type="button" style="flex:1; min-width:120px; padding:10px; font-size:13px;">Bildirimleri Aç</button>
+                            <button id="testNotifyBtn" type="button" class="secondary-btn" style="flex:1; min-width:120px; padding:10px; font-size:13px;">🔔 Test Et</button>
+                        </div>
+                        <button id="enablePushBtn" type="button" style="padding:10px; font-size:13px;">📡 Arka Plan Bildirimini Yeniden Kur (normalde otomatik)</button>
+                        <div id="pushStatus" style="font-size:12px; line-height:1.5; color:var(--text-muted);"></div>
+                        <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                            <input type="checkbox" id="keepAwakeChk" style="width:18px; height:18px; min-height:0;"> 📱 Ekranı açık tut (telefon uyurken uyarı gelmez)
+                        </label>
+                        <span style="font-size:11px; line-height:1.5;">Not: Uyarılar uygulama/sayfa açıkken çalışır. Tarayıcı tamamen kapalıyken web sayfası uyarı veremez.</span>
+                    </div>
+
                     <div class="modal-field">
                         <label><b>Ders Adı:</b></label>
                         <input type="text" id="schClassName" placeholder="Örn: Matematik Vize / Algoritma">
@@ -1365,14 +1529,6 @@
                         <label><b>🖼️ Fotoğraftan Otomatik Ders Programı Yükle:</b></label>
                         <input type="file" id="scheduleImageInput" accept="image/*" style="font-size:11px;">
                         <button id="importScheduleImageBtn" style="background-color: var(--success); color: white; font-weight: bold; padding: 8px; margin-top: 5px;">🤖 Fotoğrafı Yapay Zeka ile Tara & Ekle</button>
-                    </div>
-
-                    <hr style="border-color: var(--border-color); margin: 10px 0;">
-
-                    <div class="modal-field">
-                        <label><b>📋 Toplu Ders Programı İçe Aktar (JSON):</b></label>
-                        <textarea id="bulkScheduleInput" placeholder='[{"name": "Matematik", "day": "Pazartesi", "time": "09:00", "notifyBefore": 10}]' style="height: 60px; font-family: monospace; font-size: 11px;"></textarea>
-                        <button id="bulkImportScheduleBtn" style="background-color: var(--border-color); color: white; font-weight: bold; padding: 6px; margin-top: 5px;">📥 JSON ile Yükle</button>
                     </div>
                 </div>
 
@@ -1473,9 +1629,17 @@
             </div>
 
             <div class="modal-field">
-                <label>🎨 Tema Vurgu Rengi:</label>
+                <label>🌗 Görünüm Teması:</label>
+                <div class="theme-picker" id="themePicker">
+                    <button type="button" class="theme-opt" data-theme-name="gece"><span class="theme-dot" style="background:linear-gradient(135deg,#161a2e,#8b7cf6);"></span>Gece</button>
+                    <button type="button" class="theme-opt" data-theme-name="gunes"><span class="theme-dot" style="background:linear-gradient(135deg,#ffffff,#6a5cf0);"></span>Gündüz</button>
+                </div>
+            </div>
+
+            <div class="modal-field">
+                <label>🎨 Vurgu Rengi (isteğe bağlı):</label>
                 <div class="color-presets-grid" id="colorPresets">
-                    <div class="color-swatch" data-color="#38bdf8" style="background-color: #38bdf8;" title="Sky Mavi"></div>
+                    <div class="color-swatch" data-color="#38bdf8" style="background: conic-gradient(#8b7cf6,#3ddc97,#6a5cf0,#8b7cf6);" title="Tema rengi (varsayılan)"></div>
                     <div class="color-swatch" data-color="#6366f1" style="background-color: #6366f1;" title="İndigo"></div>
                     <div class="color-swatch" data-color="#8b5cf6" style="background-color: #8b5cf6;" title="Mor"></div>
                     <div class="color-swatch" data-color="#ec4899" style="background-color: #ec4899;" title="Pembe"></div>
@@ -1497,7 +1661,7 @@
                 <span style="font-size:11px; line-height:1.5;">Ücretsiz anahtar almak için <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--accent);">aistudio.google.com/apikey</a> adresine girin, "Create API key" deyin ve anahtarı buraya yapıştırın. Anahtar yalnızca bu cihazda saklanır, kimseyle paylaşılmaz.</span>
             </div>
 
-            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.9</div>
+            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.17</div>
 
             <div class="modal-actions">
                 <button id="saveSettingsBtn">Kaydet</button>
@@ -1527,7 +1691,7 @@
 
     <script>
         const CENTRAL_GEMINI_API_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN";
-        const APP_VERSION = "v1.0.9";
+        const APP_VERSION = "v1.0.17";
         // Telefonda konsol olmadığı için beklenmeyen hataları ekranda göster
         (function () {
             let box = null, timer = null;
@@ -1567,11 +1731,54 @@
             if (!e) return 'Yapay zeka yanıt oluşturamadı.';
             if (e.status === 'INVALID_ARGUMENT' && /API key/i.test(e.message || '')) return 'API anahtarı geçersiz. Profil Ayarları\'ndan anahtarı kontrol edin.';
             if (e.status === 'RESOURCE_EXHAUSTED' || e.code === 429) return 'Ücretsiz kullanım kotası doldu. Biraz bekleyip tekrar deneyin.';
+            if (e.status === 'UNAVAILABLE' || e.code === 503) return 'Google yapay zeka sunucuları şu an çok yoğun. Birkaç kez otomatik denendi ama yanıt alınamadı. Bir iki dakika sonra tekrar deneyin.';
             if (e.status === 'PERMISSION_DENIED') return 'Bu anahtarın izni yok. Yeni bir anahtar oluşturup deneyin.\n\nGoogle\'ın mesajı: ' + (e.message || '');
             return e.message || 'Yapay zeka hatası.';
         }
-        function geminiUrl() {
-            return `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+        // Ana model yoğunsa sırayla denenecek yedek modeller (Google'ın "latest" takma adları)
+        const GEMINI_FALLBACK_MODELS = ["gemini-flash-latest", "gemini-flash-lite-latest"];
+        function geminiUrl(model) {
+            return `https://generativelanguage.googleapis.com/v1beta/models/${model || GEMINI_MODEL}:generateContent`;
+        }
+        function geminiHasText(data) {
+            const c = data && data.candidates && data.candidates[0];
+            return !!(c && c.content && c.content.parts && c.content.parts[0] && c.content.parts[0].text);
+        }
+        // Google'a istek atar. Yoğunluk/geçici hatalarda otomatik yeniden dener, gerekirse yedek modele geçer.
+        async function callGemini(reqBody, apiKey, onStatus) {
+            const models = [GEMINI_MODEL, ...GEMINI_FALLBACK_MODELS];
+            const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+            let lastData = null;
+            for (let mi = 0; mi < models.length; mi++) {
+                for (let attempt = 1; attempt <= 3; attempt++) {
+                    let resp = null, data = null;
+                    try {
+                        resp = await fetch(geminiUrl(models[mi]), {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+                            body: JSON.stringify(reqBody)
+                        });
+                        data = await resp.json();
+                    } catch (e) {
+                        data = { error: { code: 0, status: 'NETWORK', message: 'Ağ hatası: ' + (e.message || e) } };
+                    }
+                    lastData = data;
+                    if (geminiHasText(data)) return data;
+                    const err = data && data.error;
+                    const code = (err && err.code) || (resp && resp.status) || 0;
+                    const st = (err && err.status) || '';
+                    if (code === 404) break;                                     // bu model yok/kapalı → sıradaki modele geç
+                    const retriable = [0, 429, 500, 502, 503, 504].includes(code) || ['UNAVAILABLE', 'INTERNAL', 'DEADLINE_EXCEEDED', 'NETWORK'].includes(st);
+                    if (!retriable) return data;                                 // anahtar/izin/istek hatası: tekrar denemenin anlamı yok
+                    if (attempt < 3) {
+                        if (onStatus) onStatus(`Google sunucuları yoğun, yeniden deneniyor… (${attempt}/3)`);
+                        await sleep(1500 * attempt);
+                    } else if (mi < models.length - 1) {
+                        if (onStatus) onStatus('Yedek model deneniyor…');
+                    }
+                }
+            }
+            return lastData;
         }
         function askForApiKey() {
             alert('Yapay zeka özellikleri için kendi Gemini API anahtarınızı girmeniz gerekiyor.\n\nSağ üstteki profil butonuna dokunun → "Gemini API Anahtarım" alanına yapıştırın. Ücretsiz anahtar: aistudio.google.com/apikey');
@@ -1606,24 +1813,7 @@
         });
 
         if ('serviceWorker' in navigator) {
-            const swCode = `
-                const CACHE_NAME = 'super-student-${APP_VERSION}';
-                self.addEventListener('install', (e) => { self.skipWaiting(); });
-                self.addEventListener('activate', (e) => {
-                    e.waitUntil(
-                        caches.keys().then((keys) => {
-                            return Promise.all(keys.map((key) => { if (key !== CACHE_NAME) return caches.delete(key); }));
-                        }).then(() => self.clients.claim())
-                    );
-                });
-                self.addEventListener('fetch', (e) => {
-                    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-                });
-            `;
-            const blob = new Blob([swCode], { type: 'text/javascript' });
-            const swUrl = URL.createObjectURL(blob);
-            
-            navigator.serviceWorker.register(swUrl).then(reg => {
+            navigator.serviceWorker.register('sw.js').then(reg => {
                 reg.update();
                 reg.addEventListener('updatefound', () => {
                     const newWorker = reg.installing;
@@ -1666,6 +1856,45 @@
                     renderSchedules();
                 }
             };
+
+            // ===== MODERN ARAYÜZ: kayan sekme göstergesi, dalga efekti, karşılama =====
+            function moveNavIndicators() {
+                [['#desktopNavTabs', '.nav-tab-btn.active'], ['#mobileBottomNav', '.mobile-nav-item.active']].forEach(([c, a]) => {
+                    const box = document.querySelector(c);
+                    if (!box || box.offsetParent === null && getComputedStyle(box).position !== 'fixed') return;
+                    const act = box.querySelector(a); if (!act || !act.offsetWidth) return;
+                    let ind = box.querySelector(':scope > .nav-indicator');
+                    if (!ind) { ind = document.createElement('span'); ind.className = 'nav-indicator'; box.prepend(ind); }
+                    ind.style.width = act.offsetWidth + 'px'; ind.style.height = act.offsetHeight + 'px';
+                    ind.style.transform = `translate(${act.offsetLeft}px, ${act.offsetTop}px)`;
+                });
+            }
+            const _baseSwitchView = window.switchView;
+            window.switchView = function (viewId) {
+                _baseSwitchView(viewId);
+                requestAnimationFrame(moveNavIndicators);
+                try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
+            };
+            window.addEventListener('resize', moveNavIndicators);
+            window.addEventListener('load', moveNavIndicators);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(moveNavIndicators);
+            [60, 400, 1200].forEach(t => setTimeout(moveNavIndicators, t));
+
+            document.addEventListener('pointerdown', (e) => {
+                const t = e.target.closest && e.target.closest('button, .nav-tab-btn, .action-badge-btn, .mobile-nav-item');
+                if (!t || t.disabled || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+                const r = t.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2;
+                const rp = document.createElement('span'); rp.className = 'ripple';
+                rp.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
+                t.appendChild(rp); setTimeout(() => rp.remove(), 650);
+            }, { passive: true });
+
+            function updateHello() {
+                const n = document.getElementById('helloName'), d = document.getElementById('helloDate'), hn = document.getElementById('headerUserName');
+                if (n && hn) n.textContent = (hn.textContent || 'öğrenci').trim() || 'öğrenci';
+                if (d) { try { d.textContent = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' }); } catch (e) {} }
+            }
+            updateHello(); setInterval(updateHello, 4000);
 
             let permanentId = localStorage.getItem('studentPermanentId');
             if (!permanentId) {
@@ -1956,9 +2185,25 @@
             window.initCloudSync = function() { initRealtimeListener(); };
 
             function applyAccentColor(colorHex) {
-                document.documentElement.style.setProperty('--accent', colorHex);
-                document.documentElement.style.setProperty('--accent-hover', adjustColorBrightness(colorHex, -20));
+                const root = document.documentElement;
+                if (!colorHex || colorHex.toLowerCase() === '#38bdf8') {   // eski varsayılan = "temanın kendi rengi"
+                    root.style.removeProperty('--accent'); root.style.removeProperty('--accent-hover'); return;
+                }
+                root.style.setProperty('--accent', colorHex);
+                root.style.setProperty('--accent-hover', adjustColorBrightness(colorHex, -20));
             }
+
+            function applyTheme(name) {
+                const root = document.documentElement;
+                if (name === 'gunes') root.setAttribute('data-theme', name); else root.removeAttribute('data-theme');
+                try { localStorage.setItem('appTheme', name || 'gece'); } catch (e) {}
+                const m = document.querySelector('meta[name="theme-color"]');
+                if (m) m.setAttribute('content', name === 'gunes' ? '#f3f4fb' : '#0d0f1c');
+                document.querySelectorAll('#themePicker .theme-opt').forEach(b => b.classList.toggle('active', b.dataset.themeName === (name || 'gece')));
+            }
+            document.querySelectorAll('#themePicker .theme-opt').forEach(b => b.addEventListener('click', () => applyTheme(b.dataset.themeName)));
+            let savedTheme = 'gece'; try { savedTheme = localStorage.getItem('appTheme') || 'gece'; } catch (e) {}
+            applyTheme(savedTheme === 'gunes' ? 'gunes' : 'gece');
 
             function adjustColorBrightness(hex, amount) {
                 let useHash = false;
@@ -2129,9 +2374,133 @@
                 }
             }
 
-            if ('Notification' in window && Notification.permission !== 'granted') {
-                Notification.requestPermission();
+            // ===== BİLDİRİM MODÜLÜ =====
+            const NOTIFY_ICON = "https://cdn-icons-png.flaticon.com/512/2921/2921222.png";
+            const notifySupported = () => ('Notification' in window);
+
+            async function ensureNotifyPermission() {
+                if (!notifySupported()) return 'unsupported';
+                if (Notification.permission === 'default') {
+                    try { await Notification.requestPermission(); } catch (e) {}
+                }
+                updateNotifyStatus();
+                return Notification.permission;
             }
+
+            async function showSystemNotification(title, body) {
+                if (!notifySupported() || Notification.permission !== 'granted') return false;
+                const opts = { body, icon: NOTIFY_ICON, badge: NOTIFY_ICON, tag: 'ders-' + Date.now(), renotify: true, vibrate: [200, 100, 200, 100, 400], requireInteraction: true };
+                try {
+                    // Android Chrome'da `new Notification()` çalışmaz; service worker üzerinden gösterilmeli
+                    const reg = ('serviceWorker' in navigator) ? await navigator.serviceWorker.getRegistration() : null;
+                    if (reg && reg.showNotification) { await reg.showNotification(title, opts); return true; }
+                } catch (e) { console.warn('SW bildirimi:', e); }
+                try { new Notification(title, opts); return true; } catch (e) { console.warn('Bildirim:', e); return false; }
+            }
+
+            function showInAppBanner(title, body) {
+                let box = document.getElementById('classBanner');
+                if (!box) {
+                    box = document.createElement('div'); box.id = 'classBanner';
+                    box.style.cssText = 'position:fixed;left:10px;right:10px;top:calc(10px + env(safe-area-inset-top,0px));z-index:9500;max-width:560px;margin:0 auto;background:var(--accent);color:var(--bg-main);padding:14px 16px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.5);font-size:14px;line-height:1.45;cursor:pointer;';
+                    box.addEventListener('click', () => { box.style.display = 'none'; });
+                    document.body.appendChild(box);
+                }
+                box.textContent = '';
+                const t = document.createElement('div'); t.style.fontWeight = '800'; t.textContent = title;
+                const m = document.createElement('div'); m.textContent = body;
+                const h = document.createElement('div'); h.style.cssText = 'font-size:11px;opacity:.7;margin-top:4px;'; h.textContent = 'Kapatmak için dokunun';
+                box.appendChild(t); box.appendChild(m); box.appendChild(h);
+                box.style.display = 'block';
+                clearTimeout(box._t); box._t = setTimeout(() => { box.style.display = 'none'; }, 60000);
+            }
+
+            async function fireClassAlert(title, body) {
+                playPhoneNotificationSound();
+                try { if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 400]); } catch (e) {}
+                showInAppBanner(title, body);
+                await showSystemNotification(title, body);
+            }
+
+            function updateNotifyStatus() {
+                const el = document.getElementById('notifyStatus');
+                const btn = document.getElementById('enableNotifyBtn');
+                if (!el) return;
+                let txt, color = 'var(--text-muted)', showBtn = false;
+                if (!notifySupported()) {
+                    txt = '⚠️ Bu tarayıcı sistem bildirimini desteklemiyor. iPhone\'da siteyi Safari\'de açıp Paylaş → "Ana Ekrana Ekle" ile yükleyin ve oradan açın. Bu durumda dersler için ekranda uyarı ve ses yine çalışır.';
+                } else if (Notification.permission === 'granted') {
+                    txt = '✅ Bildirimler açık.'; color = '#34d399';
+                } else if (Notification.permission === 'denied') {
+                    txt = '⛔ Bildirimler engellenmiş. Tarayıcı/telefon ayarlarından bu site için bildirime izin verin.'; color = '#f87171';
+                } else {
+                    txt = '🔕 Bildirim izni henüz verilmedi.'; color = '#f59e0b'; showBtn = true;
+                }
+                el.textContent = txt; el.style.color = color;
+                if (btn) btn.style.display = showBtn ? '' : 'none';
+            }
+
+            const enableNotifyBtn = document.getElementById('enableNotifyBtn');
+            if (enableNotifyBtn) enableNotifyBtn.addEventListener('click', () => { ensureNotifyPermission(); });
+            const testNotifyBtn = document.getElementById('testNotifyBtn');
+            if (testNotifyBtn) testNotifyBtn.addEventListener('click', async () => {
+                await ensureNotifyPermission();
+                await fireClassAlert('🔔 Test bildirimi', 'Bildirimler ve ses çalışıyor. Ders vakti böyle haber verilecek.');
+            });
+
+            // Ekranı açık tut: telefon ekranı kapanınca/sayfa arka plana alınınca tarayıcı zamanlayıcıları durdurur
+            let wakeLock = null;
+            async function setKeepAwake(on) {
+                try {
+                    if (on) {
+                        if (!('wakeLock' in navigator)) { alert('Bu tarayıcı ekranı açık tutmayı desteklemiyor.'); const c = document.getElementById('keepAwakeChk'); if (c) c.checked = false; return; }
+                        wakeLock = await navigator.wakeLock.request('screen');
+                    } else if (wakeLock) { await wakeLock.release(); wakeLock = null; }
+                    try { localStorage.setItem('keepAwake', on ? '1' : '0'); } catch (e) {}
+                } catch (e) { console.warn('wakeLock', e); }
+            }
+            const keepAwakeChk = document.getElementById('keepAwakeChk');
+            if (keepAwakeChk) keepAwakeChk.addEventListener('change', () => setKeepAwake(keepAwakeChk.checked));
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible' && keepAwakeChk && keepAwakeChk.checked) setKeepAwake(true);
+            });
+
+            // ===== ARKA PLAN (PUSH) BİLDİRİMİ =====
+            // Firebase Console > Proje Ayarları > Cloud Messaging > Web Push sertifikaları > "Anahtar çifti" (genel anahtar)
+            const PUSH_VAPID_KEY = "BURAYA_VAPID_ANAHTARINI_YAPISTIR";
+            async function enablePush() {
+                const out = document.getElementById('pushStatus');
+                const say = (t) => { if (out) out.textContent = t; };
+                try {
+                    if (PUSH_VAPID_KEY.startsWith('BURAYA')) { say('⚠️ VAPID anahtarı koda henüz eklenmemiş (kurulum adımı).'); return; }
+                    if (!window.fbMessagingLib || !window.db) { say('⚠️ Bulut bağlantısı hazır değil, biraz sonra tekrar deneyin.'); return; }
+                    if (!('serviceWorker' in navigator) || !('PushManager' in window)) { say('⚠️ Bu cihaz/tarayıcı push desteklemiyor. iPhone\'da önce "Ana Ekrana Ekle" yapın.'); return; }
+                    const perm = await ensureNotifyPermission();
+                    if (perm !== 'granted') { say('⛔ Bildirim izni verilmedi.'); return; }
+                    const reg = await navigator.serviceWorker.ready;
+                    const L = window.fbMessagingLib;
+                    const token = await L.getToken(L.getMessaging(L.app), { vapidKey: PUSH_VAPID_KEY, serviceWorkerRegistration: reg });
+                    if (!token) { say('⚠️ Anahtar alınamadı.'); return; }
+                    localStorage.setItem('pushToken', token);
+                    await savePushToken(token);
+                    say('✅ Arka plan bildirimi açık: uygulama kapalıyken de ders uyarısı gelir.'); { const bt = document.getElementById('enablePushBtn'); if (bt) bt.style.display = 'none'; }
+                } catch (e) { say('⚠️ Açılamadı: ' + (e && e.message ? e.message : e)); }
+            }
+            async function savePushToken(token) {
+                if (!window.db || !userProfile || !userProfile.id) return;
+                await window.fbModules.setDoc(window.fbModules.doc(window.db, "ogrenciVerileri", userProfile.id),
+                    { pushTokens: window.fbModules.arrayUnion(token), tzOffsetMin: new Date().getTimezoneOffset() }, { merge: true });
+            }
+            window.savePushToken = savePushToken;
+            const enablePushBtn = document.getElementById('enablePushBtn');
+            if (enablePushBtn) enablePushBtn.addEventListener('click', enablePush);
+            // Zaten açıksa saat dilimi/token'ı tazele
+            setTimeout(() => {
+                if (!notifySupported() || Notification.permission !== 'granted') return;
+                const t = localStorage.getItem('pushToken');
+                if (t) { savePushToken(t).catch(()=>{}); const bt = document.getElementById('enablePushBtn'); if (bt) bt.style.display = 'none'; const ps = document.getElementById('pushStatus'); if (ps) ps.textContent = '✅ Arka plan bildirimi açık.'; } else enablePush();   // izin zaten varsa sessizce kaydol
+            }, 6000);
+            updateNotifyStatus();
 
             const schClassName = document.getElementById('schClassName');
             const schDay = document.getElementById('schDay');
@@ -2139,8 +2508,6 @@
             const schNotifyBefore = document.getElementById('schNotifyBefore');
             const addScheduleBtn = document.getElementById('addScheduleBtn');
             const scheduleList = document.getElementById('scheduleList');
-            const bulkScheduleInput = document.getElementById('bulkScheduleInput');
-            const bulkImportScheduleBtn = document.getElementById('bulkImportScheduleBtn');
             const scheduleImageInput = document.getElementById('scheduleImageInput');
             const importScheduleImageBtn = document.getElementById('importScheduleImageBtn');
 
@@ -2163,6 +2530,8 @@
 
                     schClassName.value = '';
                     renderSchedules();
+                    ensureNotifyPermission().then(p => { if (p === 'granted') enablePush(); });   // tek dokunuşla hem bildirim hem arka plan push açılır
+                    checkSchedules();
                     alert('Ders başarıyla programa eklendi!');
                 });
             }
@@ -2192,20 +2561,14 @@
 
                             const promptText = `Bu görseldeki haftalık ders programını analiz et. İçindeki tüm dersleri çıkar ve SADECE saf bir JSON dizisi (array) formatında ver. Başka hiçbir açıklama, markdown blok işareti ekleme. Her nesnenin şu anahtarları olsun: "name", "day", "time", "notifyBefore" (10).`;
 
-                            const response = await fetch(geminiUrl(), {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': activeApiKey },
-                                body: JSON.stringify({
-                                    contents: [{
-                                        parts: [
-                                            { text: promptText },
-                                            { inline_data: { mime_type: mimeType, data: base64Data } }
-                                        ]
-                                    }]
-                                })
-                            });
-
-                            const data = await response.json();
+                            const data = await callGemini({
+                                contents: [{
+                                    parts: [
+                                        { text: promptText },
+                                        { inline_data: { mime_type: mimeType, data: base64Data } }
+                                    ]
+                                }]
+                            }, activeApiKey, (msg) => { importScheduleImageBtn.textContent = '⏳ ' + msg; });
                             importScheduleImageBtn.textContent = '🤖 Fotoğrafı Yapay Zeka ile Tara & Ekle';
                             importScheduleImageBtn.disabled = false;
 
@@ -2252,34 +2615,6 @@
                 });
             }
 
-            if (bulkImportScheduleBtn) {
-                bulkImportScheduleBtn.addEventListener('click', () => {
-                    const rawJson = bulkScheduleInput.value.trim();
-                    if (!rawJson) return;
-                    try {
-                        const parsedData = JSON.parse(rawJson);
-                        if (Array.isArray(parsedData)) {
-                            parsedData.forEach(item => {
-                                if (item.name && item.day && item.time) {
-                                    schedules.push({
-                                        id: Date.now() + Math.random(),
-                                        name: item.name,
-                                        day: item.day,
-                                        time: item.time,
-                                        notifyBefore: parseInt(item.notifyBefore) || 10
-                                    });
-                                }
-                            });
-                            localStorage.setItem('studentSchedules', JSON.stringify(schedules));
-                            syncDataToCloud();
-                            renderSchedules();
-                            bulkScheduleInput.value = '';
-                            alert('Toplu dersler eklendi!');
-                        }
-                    } catch (e) { alert('Hatalı JSON!'); }
-                });
-            }
-
             window.deleteSchedule = function(id) {
                 schedules = schedules.filter(s => s.id !== id);
                 localStorage.setItem('studentSchedules', JSON.stringify(schedules));
@@ -2312,43 +2647,50 @@
                 });
             }
 
-            // GÜÇLENDİRİLMİŞ ZAMANLAYICI VE BİLDİRİM KONTROLÜ
+            // ZAMANLAYICI: tam dakikayı kaçırsa bile (arka plandan dönünce) yakalar, tekrar tekrar uyarmaz
+            const DAY_IDX = { 'Pazar': 0, 'Pazartesi': 1, 'Salı': 2, 'Çarşamba': 3, 'Perşembe': 4, 'Cuma': 5, 'Cumartesi': 6 };
             let triggeredSchedules = new Set();
+            try { triggeredSchedules = new Set(JSON.parse(localStorage.getItem('triggeredSchedules') || '[]')); } catch (e) {}
+            function rememberTriggered(key) {
+                triggeredSchedules.add(key);
+                try {
+                    const arr = Array.from(triggeredSchedules).slice(-60);
+                    triggeredSchedules = new Set(arr);
+                    localStorage.setItem('triggeredSchedules', JSON.stringify(arr));
+                } catch (e) {}
+            }
+            const GRACE_AFTER_START_MIN = 5;   // ders başladıktan sonra en fazla 5 dk geç uyar
             function checkSchedules() {
                 if (!schedules || schedules.length === 0) return;
-
                 const now = new Date();
-                const daysMap = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
-                const currentDayName = daysMap[now.getDay()];
-                const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
-
                 schedules.forEach(s => {
-                    if (s.day === currentDayName) {
-                        const [cHour, cMin] = s.time.split(':').map(Number);
-                        const classTotalMinutes = cHour * 60 + cMin;
-                        const targetNotifyMinutes = classTotalMinutes - (s.notifyBefore || 10);
-
-                        const eventKey = `${s.id}-${now.toLocaleDateString()}-${targetNotifyMinutes}`;
-                        
-                        if (currentTotalMinutes === targetNotifyMinutes && !triggeredSchedules.has(eventKey)) {
-                            triggeredSchedules.add(eventKey);
-                            
-                            playPhoneNotificationSound();
-
-                            if ('Notification' in window && Notification.permission === 'granted') {
-                                new Notification("🔔 DERS VAKTİ YAKLAŞIYOR!", {
-                                    body: `"${s.name}" dersinin başlamasına ${s.notifyBefore} dk kaldı!`,
-                                    icon: "https://cdn-icons-png.flaticon.com/512/2921/2921222.png"
-                                });
-                            }
-
-                            alert(`🔔 DERS VAKTİ YAKLAŞIYOR!\n\n"${s.name}" dersinin başlamasına ${s.notifyBefore} dk kaldı!`);
+                    if (!(s.day in DAY_IDX) || !s.time) return;
+                    const [h, m] = String(s.time).split(':').map(Number);
+                    if (isNaN(h) || isNaN(m)) return;
+                    const before = parseInt(s.notifyBefore) || 10;
+                    for (let off = -1; off <= 1; off++) {   // dün/bugün/yarın: gece yarısını aşan bildirimler için
+                        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + off);
+                        if (d.getDay() !== DAY_IDX[s.day]) continue;
+                        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m);
+                        const notifyAt = new Date(start.getTime() - before * 60000);
+                        const lastOk = new Date(start.getTime() + GRACE_AFTER_START_MIN * 60000);
+                        const key = `${s.id}-${start.getTime()}`;
+                        if (now >= notifyAt && now <= lastOk && !triggeredSchedules.has(key)) {
+                            rememberTriggered(key);
+                            const minsLeft = Math.max(0, Math.ceil((start - now) / 60000));
+                            const body = now < start
+                                ? `"${s.name}" dersinin başlamasına ${minsLeft} dk kaldı!`
+                                : `"${s.name}" dersi başladı!`;
+                            fireClassAlert('🔔 DERS VAKTİ YAKLAŞIYOR!', body);
                         }
                     }
                 });
             }
 
-            setInterval(checkSchedules, 10000);
+            setInterval(checkSchedules, 5000);
+            window.addEventListener('focus', checkSchedules);
+            window.addEventListener('pageshow', checkSchedules);
+            setTimeout(checkSchedules, 1500);
 
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') {
@@ -2993,13 +3335,8 @@ KURALLAR:
                         }
 
                         const reqBody = { contents: requestBodyContents, generationConfig: { responseMimeType: 'application/json' } };
-                        const response = await fetch(geminiUrl(), {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': activeApiKey },
-                            body: JSON.stringify(reqBody)
-                        });
-                        
-                        const data = await response.json();
+                        const setStatus = (msg) => { studioDisplayBox.innerHTML = `<div class="test-sheet-card">⏳ ${escapeHtml(msg)}</div>`; };
+                        const data = await callGemini(reqBody, activeApiKey, setStatus);
                         const cand = data && data.candidates && data.candidates[0];
                         const aiText = cand && cand.content && cand.content.parts && cand.content.parts[0] && cand.content.parts[0].text;
                         
