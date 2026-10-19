@@ -1389,12 +1389,12 @@
     </script>
 
     <div id="updateBanner">
-        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.21) yayınlandı!</span>
+        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.22) yayınlandı!</span>
         <button onclick="window.location.reload()">Şimdi Güncelle</button>
     </div>
 
     <header class="app-header">
-        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.21)</span></h1>
+        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.22)</span></h1>
         <div class="header-actions">
             <button id="installAppBtn" style="display: none; background-color: var(--success); color: #fff; padding: 6px 12px; font-size: 11px; border-radius: 20px;">📲 Yükle</button>
             <div class="action-badge-btn" id="openFriendsModalBtn" title="Arkadaşlarım">
@@ -1868,7 +1868,7 @@
                 <span style="font-size:11px; line-height:1.5;">Ücretsiz anahtar almak için <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--accent);">aistudio.google.com/apikey</a> adresine girin, "Create API key" deyin ve anahtarı buraya yapıştırın. Anahtar yalnızca bu cihazda saklanır, kimseyle paylaşılmaz.</span>
             </div>
 
-            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.21</div>
+            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.22</div>
 
             <div class="modal-actions">
                 <button id="saveSettingsBtn">Kaydet</button>
@@ -1953,7 +1953,7 @@
 
     <script>
         const CENTRAL_GEMINI_API_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN";
-        const APP_VERSION = "v1.0.21";
+        const APP_VERSION = "v1.0.22";
         // Telefonda konsol olmadığı için beklenmeyen hataları ekranda göster
         (function () {
             let box = null, timer = null;
@@ -2648,11 +2648,15 @@
                 });
             }
 
+            // Fotoğraf yalnızca bu cihazda değiştirildiyse buluta yazılır; yoksa başka cihazın fotoğrafı ezilmez
+            let photoDirty = false;
             async function syncDataToCloud() {
                 if (!window.db) return;
                 try {
+                    const profPayload = Object.assign({}, userProfile);
+                    if (!photoDirty && !profPayload.photo) delete profPayload.photo;
                     const cloudPayload = {
-                        profile: userProfile,
+                        profile: profPayload,
                         notes: notes,
                         friends: friends,
                         friendRequests: friendRequests,
@@ -2669,15 +2673,17 @@
                         cloudPayload, 
                         { merge: true }
                     );
+                    photoDirty = false;
                     const cloudEl = document.getElementById('cloudStatusText');
                     if(cloudEl) cloudEl.textContent = "☁️ Bulut Aktif";
                 } catch (e) {
+                    console.warn('Bulut yazma hatası', e);
                     const cloudEl = document.getElementById('cloudStatusText');
                     if(cloudEl) cloudEl.textContent = "📴 Çevrimdışı Mod (Yerel)";
                 }
             }
 
-            let isListening = false;
+            let listeningId = null, docUnsub = null, globalsStarted = false;
             let chatUnsubscribe = null;
 
             function initGlobalGroupsListener() {
@@ -2711,11 +2717,13 @@
             }
 
             function initRealtimeListener() {
-                if (!window.db || isListening) return;
-                isListening = true;
+                if (!window.db) return;
+                if (listeningId === userProfile.id) return;     // zaten doğru belgeyi dinliyoruz
+                if (docUnsub) { try { docUnsub(); } catch (e) {} docUnsub = null; }   // giriş yapılınca kimlik değişir: eski (cihaza özel) belgeyi bırak
+                listeningId = userProfile.id;
                 try {
                     const docRef = window.fbModules.doc(window.db, "ogrenciVerileri", userProfile.id);
-                    window.fbModules.onSnapshot(docRef, (docSnap) => {
+                    docUnsub = window.fbModules.onSnapshot(docRef, (docSnap) => {
                         if (docSnap.exists()) {
                             const data = docSnap.data();
                             if (data.notes) notes = data.notes;
@@ -2746,9 +2754,15 @@
                             renderSchedules();
                             renderDashboard();
                             if (document.getElementById('progressView').classList.contains('active')) renderProgress();
+                        } else if (window.auth && window.auth.currentUser) {
+                            syncDataToCloud();      // bu hesabın bulutta henüz verisi yok: bu cihazdakileri yükle
                         }
-                    }, (error) => {});
-                    initGlobalGroupsListener();
+                    }, (error) => {
+                        console.warn('Bulut okuma hatası', error);
+                        const cloudEl = document.getElementById('cloudStatusText');
+                        if (cloudEl) cloudEl.textContent = '⚠️ Bulut okunamadı: ' + (error && (error.code || error.message) || '');
+                    });
+                    if (!globalsStarted) { globalsStarted = true; initGlobalGroupsListener(); }
                     setupChatListener(currentRoom);
                 } catch (e) {}
             }
@@ -4208,6 +4222,7 @@ KURALLAR:
                         if (goals.dailyGoal) markOnboardSeen();
                         userProfile.name = newName;
                         userProfile.accentColor = tempSelectedColor;
+                        if ((userProfile.photo || '') !== (tempPhoto || '')) photoDirty = true;
                         userProfile.photo = tempPhoto;
                         localStorage.setItem('studentProfile', JSON.stringify(userProfile));
                         syncDataToCloud();
