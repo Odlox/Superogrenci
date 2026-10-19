@@ -1389,12 +1389,12 @@
     </script>
 
     <div id="updateBanner">
-        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.20) yayınlandı!</span>
+        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.21) yayınlandı!</span>
         <button onclick="window.location.reload()">Şimdi Güncelle</button>
     </div>
 
     <header class="app-header">
-        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.20)</span></h1>
+        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.21)</span></h1>
         <div class="header-actions">
             <button id="installAppBtn" style="display: none; background-color: var(--success); color: #fff; padding: 6px 12px; font-size: 11px; border-radius: 20px;">📲 Yükle</button>
             <div class="action-badge-btn" id="openFriendsModalBtn" title="Arkadaşlarım">
@@ -1695,7 +1695,7 @@
                     <div class="gel-summary" id="gelSummary"></div>
                 </div>
                 <div class="gel-card">
-                    <div class="gel-head"><h3>📅 Son 7 Gün</h3><small id="gelGoalLabel"></small></div>
+                    <div class="gel-head"><h3>📅 Bu Hafta</h3><small id="gelGoalLabel"></small></div>
                     <div id="gelBars"></div>
                 </div>
             </div>
@@ -1868,7 +1868,7 @@
                 <span style="font-size:11px; line-height:1.5;">Ücretsiz anahtar almak için <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--accent);">aistudio.google.com/apikey</a> adresine girin, "Create API key" deyin ve anahtarı buraya yapıştırın. Anahtar yalnızca bu cihazda saklanır, kimseyle paylaşılmaz.</span>
             </div>
 
-            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.20</div>
+            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.21</div>
 
             <div class="modal-actions">
                 <button id="saveSettingsBtn">Kaydet</button>
@@ -1953,7 +1953,7 @@
 
     <script>
         const CENTRAL_GEMINI_API_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN";
-        const APP_VERSION = "v1.0.20";
+        const APP_VERSION = "v1.0.21";
         // Telefonda konsol olmadığı için beklenmeyen hataları ekranda göster
         (function () {
             let box = null, timer = null;
@@ -2218,9 +2218,11 @@
                 return n;
             }
             function last7() {
+                // İçinde bulunulan hafta: Pazartesi → Pazar
                 const out = []; const now = new Date();
-                for (let i = 6; i >= 0; i--) {
-                    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+                const mondayOffset = (now.getDay() + 6) % 7;   // Pzt=0 ... Paz=6
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - mondayOffset + i);
                     out.push({ d, min: studyLog[dkey(d)] || 0 });
                 }
                 return out;
