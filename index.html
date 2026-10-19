@@ -1234,6 +1234,16 @@
         .gel-item .gi-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
         .gel-pct { font-weight: 800; font-size: 14px; padding: 4px 10px; border-radius: 999px; flex-shrink: 0; background: color-mix(in srgb, var(--accent) 16%, transparent); }
         .gel-pct.good { background: rgba(16,185,129,.2); color: #34d399; } .gel-pct.mid { background: rgba(245,158,11,.2); color: #fbbf24; } .gel-pct.low { background: rgba(239,68,68,.2); color: #f87171; }
+        .gel-item.clickable { cursor: pointer; transition: border-color .2s, background .2s, transform .2s var(--ease); }
+        .gel-item.clickable:hover { border-color: color-mix(in srgb, var(--accent) 55%, transparent); transform: translateY(-1px); }
+        .gel-item.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg-card)); }
+        .gi-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .gel-wcount { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(239,68,68,.16); color: #f87171; }
+        .gi-chev { color: var(--text-muted); font-size: 18px; line-height: 1; transition: transform .2s var(--ease); }
+        .gel-item.sel .gi-chev { transform: rotate(90deg); color: var(--accent); }
+        .wb-sel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .wb-sel-head b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
+        .wb-sel-head button { padding: 6px 12px; font-size: 12px; min-height: 0; flex-shrink: 0; }
         .wb-item { background: color-mix(in srgb, var(--bg-main) 45%, var(--bg-card)); border: 1px solid var(--hairline); border-left: 4px solid var(--danger); border-radius: var(--r-md); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
         .wb-q { font-weight: 700; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
         .wb-a { color: #34d399; line-height: 1.45; word-break: break-word; } .wb-y { color: #f87171; line-height: 1.45; word-break: break-word; }
@@ -1379,12 +1389,12 @@
     </script>
 
     <div id="updateBanner">
-        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.19) yayınlandı!</span>
+        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.20) yayınlandı!</span>
         <button onclick="window.location.reload()">Şimdi Güncelle</button>
     </div>
 
     <header class="app-header">
-        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.19)</span></h1>
+        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.20)</span></h1>
         <div class="header-actions">
             <button id="installAppBtn" style="display: none; background-color: var(--success); color: #fff; padding: 6px 12px; font-size: 11px; border-radius: 20px;">📲 Yükle</button>
             <div class="action-badge-btn" id="openFriendsModalBtn" title="Arkadaşlarım">
@@ -1694,7 +1704,7 @@
                     <div class="gel-head"><h3>✅ Test Geçmişi</h3><small id="gelHistCount"></small></div>
                     <div id="gelHistory"></div>
                 </div>
-                <div class="gel-card">
+                <div class="gel-card" id="gelWrongCard">
                     <div class="gel-head"><h3>📕 Yanlış Defteri</h3><small id="gelWrongCount"></small></div>
                     <div id="gelWrong"></div>
                 </div>
@@ -1858,7 +1868,7 @@
                 <span style="font-size:11px; line-height:1.5;">Ücretsiz anahtar almak için <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--accent);">aistudio.google.com/apikey</a> adresine girin, "Create API key" deyin ve anahtarı buraya yapıştırın. Anahtar yalnızca bu cihazda saklanır, kimseyle paylaşılmaz.</span>
             </div>
 
-            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.19</div>
+            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.20</div>
 
             <div class="modal-actions">
                 <button id="saveSettingsBtn">Kaydet</button>
@@ -1943,7 +1953,7 @@
 
     <script>
         const CENTRAL_GEMINI_API_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN";
-        const APP_VERSION = "v1.0.19";
+        const APP_VERSION = "v1.0.20";
         // Telefonda konsol olmadığı için beklenmeyen hataları ekranda göster
         (function () {
             let box = null, timer = null;
@@ -2195,6 +2205,8 @@
             let studyLog = loadLocal('studentStudyLog', {});      // { 'YYYY-MM-DD': dakika }
             let testHistory = loadLocal('studentTestHistory', []);
             let wrongBook = loadLocal('studentWrongBook', []);
+            let selectedWrongId = null;      // Gelişim: dokunulan testin yanlışları açık
+            migrateWrongBook();
 
             const dkey = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
             const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -2309,92 +2321,162 @@
                     bars.appendChild(lab);
                 }
 
-                // Test geçmişi
+                // Test geçmişi: bir teste dokununca o testin yanlışları aşağıdaki Yanlış Defteri'nde açılır
                 const hist = document.getElementById('gelHistory'), hc = document.getElementById('gelHistCount');
+                const wrongOf = (id) => wrongBook.filter(w => w.testId === id);
+                const orphans = wrongBook.filter(w => w.testId == null || !testHistory.some(r => r.id === w.testId));
                 if (hc) hc.textContent = testHistory.length + ' kayıt';
+                const pickTest = (id) => {
+                    selectedWrongId = (selectedWrongId === id) ? null : id;
+                    renderProgress();
+                    if (selectedWrongId !== null) { const c = document.getElementById('gelWrongCard'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+                };
                 if (hist) {
                     hist.textContent = '';
-                    if (!testHistory.length) hist.appendChild(mk('div', 'gel-empty', 'Henüz test çözmedin. Soru & Test sekmesinden bir test üretip çöz, sonuçların burada birikir.'));
+                    if (!testHistory.length && !orphans.length) hist.appendChild(mk('div', 'gel-empty', 'Henüz test çözmedin. Soru & Test sekmesinden bir test üretip çöz, sonuçların burada birikir.'));
                     else {
                         const ul = mk('ul', 'gel-list');
-                        testHistory.slice(0, 8).forEach(r => {
-                            const li = mk('li', 'gel-item'); const main = mk('div', 'gi-main');
-                            main.appendChild(mk('div', 'gi-title', r.title));
+                        const addRow = (id, title, sub, pct, nWrong) => {
+                            const li = mk('li', 'gel-item clickable' + (selectedWrongId === id ? ' sel' : ''));
+                            li.tabIndex = 0; li.setAttribute('role', 'button'); li.setAttribute('aria-expanded', selectedWrongId === id ? 'true' : 'false');
+                            const main = mk('div', 'gi-main'); main.appendChild(mk('div', 'gi-title', title)); main.appendChild(mk('div', 'gi-sub', sub));
+                            const right = mk('div', 'gi-right');
+                            if (nWrong > 0) right.appendChild(mk('span', 'gel-wcount', '📕 ' + nWrong));
+                            if (pct != null) right.appendChild(mk('span', 'gel-pct ' + (pct >= 70 ? 'good' : pct >= 40 ? 'mid' : 'low'), '%' + pct));
+                            right.appendChild(mk('span', 'gi-chev', '›'));
+                            li.appendChild(main); li.appendChild(right);
+                            li.addEventListener('click', () => pickTest(id));
+                            li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickTest(id); } });
+                            ul.appendChild(li);
+                        };
+                        testHistory.slice(0, 15).forEach(r => {
                             let dt = ''; try { dt = new Date(r.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }); } catch (e) {}
-                            main.appendChild(mk('div', 'gi-sub', dt + ' · ✓ ' + r.d + '  ✕ ' + r.y + '  ○ ' + r.b + (r.kind === 'test' && r.net != null ? ' · Net ' + r.net : '')));
-                            li.appendChild(main); li.appendChild(mk('span', 'gel-pct ' + (r.pct >= 70 ? 'good' : r.pct >= 40 ? 'mid' : 'low'), '%' + r.pct)); ul.appendChild(li);
+                            addRow(r.id, r.title, dt + ' · ' + (r.kind === 'test' ? 'Test' : 'Bilgi') + ' · ✓ ' + r.d + '  ✕ ' + r.y + '  ○ ' + r.b + (r.kind === 'test' && r.net != null ? ' · Net ' + r.net : ''), r.pct, wrongOf(r.id).length);
                         });
+                        if (orphans.length) addRow('orphan', 'Diğer yanlışlar', 'Bir teste bağlanamayan eski kayıtlar', null, orphans.length);
                         hist.appendChild(ul);
                     }
                 }
 
-                // Yanlış defteri
+                // Yanlış defteri: seçili testin yanlışları (seçim yoksa özet)
                 const wb = document.getElementById('gelWrong'), wc = document.getElementById('gelWrongCount');
                 if (wc) wc.textContent = wrongBook.length + ' soru';
+                const delItem = (w) => { wrongBook = wrongBook.filter(x => x.id !== w.id); saveLocal('studentWrongBook', wrongBook); syncDataToCloud(); renderProgress(); };
+                const wbCard = (w) => {
+                    const it = mk('div', 'wb-item');
+                    it.appendChild(mk('div', 'wb-q', w.question));
+                    if (w.options) {
+                        it.appendChild(mk('div', 'wb-a', '✓ Doğru: ' + w.options[w.correct]));
+                        if (w.picked != null && w.options[w.picked] != null) it.appendChild(mk('div', 'wb-y', '✕ Senin cevabın: ' + w.options[w.picked]));
+                        if (w.why) it.appendChild(mk('div', 'wb-why', w.why));
+                    } else {
+                        it.appendChild(mk('div', 'wb-a', '✓ ' + (w.answer || '')));
+                        if (w.keyPoints && w.keyPoints.length) it.appendChild(mk('div', 'wb-why', '• ' + w.keyPoints.join('\n• ')));
+                    }
+                    const act = mk('div', 'wb-actions'); const del = mk('button', 'delete-btn', 'Öğrendim, sil'); del.type = 'button';
+                    del.addEventListener('click', () => delItem(w));
+                    act.appendChild(del); it.appendChild(act);
+                    return it;
+                };
+                const solveBtns = (items, title) => {
+                    const acts = mk('div', 'gel-actions');
+                    const tItems = items.filter(w => w.options && w.options.length >= 2), bItems = items.filter(w => !w.options);
+                    if (tItems.length) {
+                        const go = mk('button', null, '🔁 Bu yanlışları çöz (' + tItems.length + ')'); go.type = 'button';
+                        go.addEventListener('click', () => {
+                            const raw = tItems.slice(0, 20).map(w => ({ question: w.question, options: w.options.slice(), correct: w.correct, rationales: null, explanation: w.why || '', wbId: w.id }));
+                            window.switchView('quizStudioView'); renderQuiz(raw, title, { wrongBook: true }, 'test');
+                        });
+                        acts.appendChild(go);
+                    }
+                    if (bItems.length) {
+                        const go = mk('button', tItems.length ? 'secondary-btn' : null, '🔁 Kartları tekrar et (' + bItems.length + ')'); go.type = 'button';
+                        go.addEventListener('click', () => {
+                            const raw = bItems.slice(0, 20).map(w => ({ question: w.question, answer: w.answer || '', keyPoints: w.keyPoints || [], wbId: w.id }));
+                            window.switchView('quizStudioView'); renderQuiz(raw, title, { wrongBook: true }, 'bilgi');
+                        });
+                        acts.appendChild(go);
+                    }
+                    return acts;
+                };
                 if (wb) {
                     wb.textContent = '';
-                    if (!wrongBook.length) wb.appendChild(mk('div', 'gel-empty', 'Yanlış yaptığın sorular burada birikir. Şimdilik defterin temiz! 🎉'));
-                    else {
-                        const ul = mk('div', 'gel-list');
-                        wrongBook.slice(0, 20).forEach(w => {
-                            const it = mk('div', 'wb-item');
-                            it.appendChild(mk('div', 'wb-q', w.question));
-                            if (w.options) {
-                                it.appendChild(mk('div', 'wb-a', '✓ Doğru: ' + w.options[w.correct]));
-                                if (w.picked != null && w.options[w.picked] != null) it.appendChild(mk('div', 'wb-y', '✕ Senin cevabın: ' + w.options[w.picked]));
-                                if (w.why) it.appendChild(mk('div', 'wb-why', w.why));
-                            } else {
-                                it.appendChild(mk('div', 'wb-a', '✓ ' + (w.answer || '')));
-                                if (w.keyPoints && w.keyPoints.length) it.appendChild(mk('div', 'wb-why', '• ' + w.keyPoints.join('\n• ')));
-                            }
-                            const act = mk('div', 'wb-actions'); const del = mk('button', 'delete-btn', 'Öğrendim, sil'); del.type = 'button';
-                            del.addEventListener('click', () => { wrongBook = wrongBook.filter(x => x.id !== w.id); saveLocal('studentWrongBook', wrongBook); syncDataToCloud(); renderProgress(); });
-                            act.appendChild(del); it.appendChild(act); ul.appendChild(it);
-                        });
-                        wb.appendChild(ul);
-                        const solvable = wrongBook.filter(w => w.options && w.options.length >= 2);
+                    const rec = testHistory.find(r => r.id === selectedWrongId);
+                    if (selectedWrongId === 'orphan' || rec) {
+                        const items = selectedWrongId === 'orphan' ? orphans : wrongOf(selectedWrongId);
+                        const title = rec ? rec.title : 'Diğer yanlışlar';
+                        const head = mk('div', 'wb-sel-head'); head.appendChild(mk('b', null, '📕 ' + title));
+                        const x = mk('button', 'secondary-btn', '✕ Kapat'); x.type = 'button'; x.addEventListener('click', () => { selectedWrongId = null; renderProgress(); });
+                        head.appendChild(x); wb.appendChild(head);
+                        if (!items.length) wb.appendChild(mk('div', 'gel-empty', 'Bu testte yanlışın yok ya da hepsini öğrendin. 🎉'));
+                        else {
+                            const ul = mk('div', 'gel-list'); items.forEach(w => ul.appendChild(wbCard(w))); wb.appendChild(ul);
+                            wb.appendChild(solveBtns(items, title + ' · Yanlışlar'));
+                        }
+                    } else if (!wrongBook.length) {
+                        wb.appendChild(mk('div', 'gel-empty', 'Yanlış yaptığın sorular burada birikir. Şimdilik defterin temiz! 🎉'));
+                    } else {
+                        wb.appendChild(mk('div', 'gel-empty', '👆 Yukarıdan bir teste dokun, o testte yanlış yaptığın sorular burada açılsın.'));
                         const acts = mk('div', 'gel-actions');
-                        if (solvable.length >= 1) {
-                            const go = mk('button', null, '🔁 Yanlışlarımı Çöz (' + solvable.length + ')'); go.type = 'button';
+                        const tAll = wrongBook.filter(w => w.options && w.options.length >= 2);
+                        if (tAll.length) {
+                            const go = mk('button', null, '🔁 Tüm yanlışlarımı çöz (' + tAll.length + ')'); go.type = 'button';
                             go.addEventListener('click', () => {
-                                const raw = solvable.slice(0, 20).map(w => ({ question: w.question, options: w.options.slice(), correct: w.correct, rationales: null, explanation: w.why || '', wbId: w.id }));
-                                window.switchView('quizStudioView');
-                                renderQuiz(raw, 'Yanlış Defterim', { wrongBook: true }, 'test');
+                                const raw = tAll.slice(0, 20).map(w => ({ question: w.question, options: w.options.slice(), correct: w.correct, rationales: null, explanation: w.why || '', wbId: w.id }));
+                                window.switchView('quizStudioView'); renderQuiz(raw, 'Yanlış Defterim', { wrongBook: true }, 'test');
                             });
                             acts.appendChild(go);
                         }
                         const clr = mk('button', 'secondary-btn', '🗑 Defteri Temizle'); clr.type = 'button';
-                        clr.addEventListener('click', () => { if (confirm('Yanlış defterindeki tüm sorular silinsin mi?')) { wrongBook = []; saveLocal('studentWrongBook', wrongBook); syncDataToCloud(); renderProgress(); } });
+                        clr.addEventListener('click', () => { if (confirm('Yanlış defterindeki tüm sorular silinsin mi?')) { wrongBook = []; selectedWrongId = null; saveLocal('studentWrongBook', wrongBook); syncDataToCloud(); renderProgress(); } });
                         acts.appendChild(clr); wb.appendChild(acts);
                     }
                 }
             }
 
-            // Test bitince: geçmişe kaydet, yanlışları deftere ekle
+            // Test bitince: geçmişe kaydet, yanlışları o teste bağlı olarak deftere ekle
             function recordQuizResult(qs, statusOf, isTest, sourceTitle, meta, counts) {
                 const { d, y, b } = counts; const N = qs.length;
                 const pct = N ? Math.round(d / N * 100) : 0;
                 const net = isTest ? Math.round((d - y / (qs[0].options.length - 1)) * 100) / 100 : null;
-                testHistory.unshift({ id: Date.now(), date: new Date().toISOString(), title: sourceTitle, kind: isTest ? 'test' : 'bilgi', d, y, b, total: N, pct, net });
+                const rid = Date.now();
+                testHistory.unshift({ id: rid, date: new Date().toISOString(), title: sourceTitle, kind: isTest ? 'test' : 'bilgi', d, y, b, total: N, pct, net });
                 testHistory = testHistory.slice(0, 100);
                 saveLocal('studentTestHistory', testHistory);
 
                 qs.forEach((q, i) => {
                     const st = statusOf(i);
-                    if (meta && meta.wrongBook && q.wbId && st === 'ok') { wrongBook = wrongBook.filter(x => x.id !== q.wbId); return; }
+                    if (meta && meta.wrongBook) {                      // defterden çözülen: doğru bilinen defterden düşer, yanlışlar zaten defterde
+                        if (q.wbId && st === 'ok') wrongBook = wrongBook.filter(x => x.id !== q.wbId);
+                        return;
+                    }
                     if (st !== 'bad') return;
-                    if (wrongBook.some(x => x.question === q.question)) return;
+                    const base = { id: rid + i + 1, testId: rid, question: q.question, source: sourceTitle, date: new Date().toISOString() };
                     if (isTest) {
                         const why = (q.rationales && q.rationales[q.correct]) || q.explanation || '';
-                        wrongBook.unshift({ id: Date.now() + i, question: q.question, options: q.options.slice(), correct: q.correct, picked: null, why, source: sourceTitle, date: new Date().toISOString() });
+                        wrongBook.unshift(Object.assign(base, { options: q.options.slice(), correct: q.correct, picked: (q.pickedIdx != null ? q.pickedIdx : null), why }));
                     } else {
-                        wrongBook.unshift({ id: Date.now() + i, question: q.question, answer: q.answer, keyPoints: q.keyPoints || [], source: sourceTitle, date: new Date().toISOString() });
+                        wrongBook.unshift(Object.assign(base, { answer: q.answer, keyPoints: q.keyPoints || [] }));
                     }
                 });
-                wrongBook = wrongBook.slice(0, 200);
+                wrongBook = wrongBook.slice(0, 300);
                 saveLocal('studentWrongBook', wrongBook);
                 syncDataToCloud();
                 renderDashboard();
+            }
+
+            // Eski kayıtlar (testId'si olmayan yanlışlar) aynı başlıklı en yakın teste bağlanır
+            function migrateWrongBook() {
+                let ch = false;
+                wrongBook.forEach(w => {
+                    if (w.testId != null) return;
+                    const cands = testHistory.filter(r => r.title === w.source);
+                    if (!cands.length) return;
+                    const wt = Date.parse(w.date) || 0; let best = cands[0], bd = Infinity;
+                    cands.forEach(r => { const dd = Math.abs((Date.parse(r.date) || 0) - wt); if (dd < bd) { bd = dd; best = r; } });
+                    w.testId = best.id; ch = true;
+                });
+                if (ch) saveLocal('studentWrongBook', wrongBook);
             }
 
             // ===== HEDEF PENCERESİ =====
@@ -2642,7 +2724,7 @@
                             if (data.goals) { goals = data.goals; saveLocal('studentGoals', goals); if (goals.dailyGoal) markOnboardSeen(); }
                             if (data.studyLog) { studyLog = data.studyLog; saveLocal('studentStudyLog', studyLog); }
                             if (data.testHistory) { testHistory = data.testHistory; saveLocal('studentTestHistory', testHistory); }
-                            if (data.wrongBook) { wrongBook = data.wrongBook; saveLocal('studentWrongBook', wrongBook); }
+                            if (data.wrongBook) { wrongBook = data.wrongBook; saveLocal('studentWrongBook', wrongBook); migrateWrongBook(); }
                             
                             if (data.profile) {
                                 userProfile.name = data.profile.name || userProfile.name;
@@ -3848,18 +3930,10 @@
                     const c = counts();
                     if (c.b > 0 && !confirm(`${c.b} soru boş. Yine de bitirilsin mi?`)) return;
                     finished = true; reviewing = false;
-                    // Sonucu Gelişim sekmesi için kaydet (şıkkı seçilen yanlışlarda "senin cevabın" de saklanır)
+                    // Sonucu Gelişim sekmesi için kaydet
                     try {
-                        const before = wrongBook.length;
+                        qs.forEach((q, i) => { q.pickedIdx = chosen[i]; });
                         recordQuizResult(qs, status, isTest, sourceTitle, meta, c);
-                        if (isTest) {
-                            qs.forEach((q, i) => {
-                                if (status(i) !== 'bad') return;
-                                const w = wrongBook.find(x => x.question === q.question && x.options && x.picked == null);
-                                if (w) { w.picked = chosen[i]; }
-                            });
-                            saveLocal('studentWrongBook', wrongBook); syncDataToCloud();
-                        }
                     } catch (e) { console.warn('Sonuç kaydedilemedi', e); }
                     render(true);
                 }
