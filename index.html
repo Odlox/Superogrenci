@@ -1421,12 +1421,12 @@
     </script>
 
     <div id="updateBanner">
-        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.23) yayınlandı!</span>
+        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.25) yayınlandı!</span>
         <button onclick="window.location.reload()">Şimdi Güncelle</button>
     </div>
 
     <header class="app-header">
-        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.23)</span></h1>
+        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.25)</span></h1>
         <div class="header-actions">
             <button id="installAppBtn" style="display: none; background-color: var(--success); color: #fff; padding: 6px 12px; font-size: 11px; border-radius: 20px;">📲 Yükle</button>
             <div class="action-badge-btn" id="openFriendsModalBtn" title="Arkadaşlarım">
@@ -1906,7 +1906,7 @@
                 <span style="font-size:11px; line-height:1.5;">Ücretsiz anahtar almak için <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--accent);">aistudio.google.com/apikey</a> adresine girin, "Create API key" deyin ve anahtarı buraya yapıştırın. Anahtar yalnızca bu cihazda saklanır, kimseyle paylaşılmaz.</span>
             </div>
 
-            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.23</div>
+            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.25</div>
 
             <div class="modal-actions">
                 <button id="saveSettingsBtn">Kaydet</button>
@@ -1928,6 +1928,7 @@
                 <label>Grup Üyeleri:</label>
                 <ul class="social-list" id="adminMembersList" style="max-height: 150px;"></ul>
             </div>
+            <button id="leaveGroupBtn" type="button" style="background: var(--danger); color: #fff; width: 100%; padding: 12px; box-shadow: 0 6px 18px color-mix(in srgb, var(--danger) 35%, transparent);">🚪 Gruptan Ayrıl</button>
             <div class="modal-actions">
                 <button id="closeGroupAdminModal" class="secondary-btn">Kapat</button>
             </div>
@@ -1991,7 +1992,7 @@
 
     <script>
         const CENTRAL_GEMINI_API_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN";
-        const APP_VERSION = "v1.0.23";
+        const APP_VERSION = "v1.0.25";
         // Telefonda konsol olmadığı için beklenmeyen hataları ekranda göster
         (function () {
             let box = null, timer = null;
@@ -2243,6 +2244,7 @@
             let studyLog = loadLocal('studentStudyLog', {});      // { 'YYYY-MM-DD': dakika }
             let testHistory = loadLocal('studentTestHistory', []);
             let wrongBook = loadLocal('studentWrongBook', []);
+            let leftGroups = loadLocal('studentLeftGroups', []);   // ortak (SYSTEM) gruplardan ayrılınanlar
             let selectedWrongId = null;      // Gelişim: dokunulan testin yanlışları açık
             migrateWrongBook();
 
@@ -2706,6 +2708,7 @@
                         studyLog: studyLog,
                         testHistory: testHistory,
                         wrongBook: wrongBook,
+                        leftGroups: leftGroups,
                         updatedAt: new Date().toISOString()
                     };
                     await window.fbModules.setDoc(
@@ -2774,6 +2777,7 @@
                             if (data.goals) { goals = data.goals; saveLocal('studentGoals', goals); if (goals.dailyGoal) markOnboardSeen(); }
                             if (data.studyLog) { studyLog = data.studyLog; saveLocal('studentStudyLog', studyLog); }
                             if (data.testHistory) { testHistory = data.testHistory; saveLocal('studentTestHistory', testHistory); }
+                            if (Array.isArray(data.leftGroups)) { leftGroups = data.leftGroups; saveLocal('studentLeftGroups', leftGroups); renderGroups(); }
                             if (data.wrongBook) { wrongBook = data.wrongBook; saveLocal('studentWrongBook', wrongBook); migrateWrongBook(); }
                             
                             if (data.profile) {
@@ -4381,10 +4385,16 @@ KURALLAR:
 
             let activeAdminGroup = null;
 
+            // Üyesi olduğum gruplar (ortak sistem grupları ayrılmadıkça görünür)
+            function isMyGroup(g) {
+                if (g.adminId === 'SYSTEM') return !leftGroups.includes(g.code);
+                return Array.isArray(g.members) && g.members.includes(userProfile.id);
+            }
+
             function renderGroups() {
                 if(!groupList) return;
                 groupList.innerHTML = '';
-                groups.forEach(g => {
+                groups.filter(isMyGroup).forEach(g => {
                     let isCurrent = g.name === currentRoom ? ' ⭐' : '';
                     let adminBadge = (g.adminId === userProfile.id) ? ' 👑(Yönetici)' : '';
                     const li = document.createElement('li');
@@ -4472,6 +4482,7 @@ KURALLAR:
                 if(adminModalTitle) adminModalTitle.textContent = `Grup Yönetimi: ${activeAdminGroup.name}`;
                 if(adminModalCode) adminModalCode.textContent = activeAdminGroup.code;
                 renderAdminMembers();
+                const lb = document.getElementById('leaveGroupBtn'); if (lb) lb.style.display = isMyGroup(activeAdminGroup) ? '' : 'none';
                 if(groupAdminModal) groupAdminModal.style.display = 'flex';
             };
 
@@ -4506,18 +4517,73 @@ KURALLAR:
                 renderGroups();
             };
 
+            const leaveGroupBtn = document.getElementById('leaveGroupBtn');
+            if (leaveGroupBtn) leaveGroupBtn.addEventListener('click', async () => {
+                if (!activeAdminGroup) return;
+                const code = activeAdminGroup.code;
+                const g = groups.find(x => x.code === code);
+                if (!g) return;
+                const me = userProfile.id, system = g.adminId === 'SYSTEM';
+                const others = (g.members || []).filter(m => m !== me);
+                const wasAdmin = g.adminId === me;
+                let msg = `"${g.name}" grubundan ayrılmak istediğine emin misin?`;
+                if (wasAdmin && others.length) msg += '\n\nYöneticisin: yönetim gruptaki diğer bir üyeye devredilecek.';
+                else if (wasAdmin) msg += '\n\nGrupta başka üye yok: grup silinecek.';
+                else if (!system) msg += '\n\nTekrar katılmak için grup kodunu girmen gerekir.';
+                if (!confirm(msg)) return;
+
+                if (system) {
+                    if (!leftGroups.includes(code)) leftGroups.push(code);
+                    saveLocal('studentLeftGroups', leftGroups);
+                    syncDataToCloud();
+                } else {
+                    g.members = others;
+                    if (wasAdmin) {
+                        if (others.length) g.adminId = others[0];
+                        else groups = groups.filter(x => x.code !== code);
+                    }
+                    await syncGlobalGroups();
+                }
+                if (groupAdminModal) groupAdminModal.style.display = 'none';
+                activeAdminGroup = null;
+                // Ayrıldığım odadaysam başka bir odaya geç
+                if (currentRoom === g.name) {
+                    const next = groups.find(isMyGroup);
+                    if (next) { window.switchRoom(next.name); }
+                    else {
+                        currentRoom = '';
+                        if (chatUnsubscribe) { chatUnsubscribe(); chatUnsubscribe = null; }
+                        messages = []; renderMessages();
+                        if (currentChatRoom) currentChatRoom.textContent = 'Aktif Oda: —  (bir gruba katıl veya grup kur)';
+                    }
+                }
+                renderGroups();
+                showToast('Gruptan ayrıldın');
+            });
+
             if(closeGroupAdminModal) closeGroupAdminModal.addEventListener('click', () => { if(groupAdminModal) groupAdminModal.style.display = 'none'; });
 
             if (sendChatBtn) {
                 sendChatBtn.addEventListener('click', async () => {
                     const text = chatInput.value.trim();
                     if (!text) return;
+                    if (!currentRoom) { alert('Önce bir gruba katıl veya grup kur.'); return; }
                     messages.push({ id: Date.now(), room: currentRoom, senderId: userProfile.id, senderName: userProfile.name, text: text, time: new Date().toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'}) });
                     chatInput.value = '';
                     if (window.db) {
                         try { await window.fbModules.setDoc(window.fbModules.doc(window.db, "chatRooms", currentRoom), { messages: messages }, { merge: true }); } catch(e) {}
                     }
                     renderMessages();
+                });
+            }
+
+            // Enter ile gönder (bilgisayar + telefon klavyesi); Shift+Enter ve yazım önerisi (IME) sırasında gönderme
+            if (chatInput) {
+                chatInput.setAttribute('enterkeyhint', 'send');
+                chatInput.addEventListener('keydown', (e) => {
+                    if (e.key !== 'Enter' || e.shiftKey || e.isComposing || e.keyCode === 229) return;
+                    e.preventDefault();
+                    if (sendChatBtn) sendChatBtn.click();
                 });
             }
 
