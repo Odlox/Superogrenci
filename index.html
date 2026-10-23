@@ -1372,7 +1372,7 @@
         .undo-bar { position: fixed; left: 50%; bottom: calc(110px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px); z-index: 9700; display: flex; align-items: center; gap: 12px; background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--hairline); color: var(--text-main); padding: 8px 8px 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,.4); opacity: 0; pointer-events: none; transition: opacity .3s, transform .35s var(--ease); max-width: calc(100vw - 24px); box-sizing: border-box; }
         .undo-bar.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
         .undo-bar button { padding: 8px 14px; font-size: 12px; min-height: 0; border-radius: 999px; }
-        /* ===== v1.0.29: şifre linki, tehlikeli bölge, hafta/ay, yanlış defteri ===== */
+        /* ===== v1.0.30: şifre linki, tehlikeli bölge, hafta/ay, yanlış defteri ===== */
         .linklike { background: none !important; box-shadow: none !important; border: none !important; color: var(--accent) !important; padding: 4px 2px !important; min-height: 0 !important; font-size: 12.5px; font-weight: 700; text-decoration: underline; cursor: pointer; width: auto; }
         #authModal .modal-card button.linklike { min-height: 0; }
         .danger-zone { border: 1.5px dashed color-mix(in srgb, var(--danger) 55%, transparent); border-radius: var(--r-md); padding: 12px; gap: 8px; }
@@ -1521,12 +1521,12 @@
     </script>
 
     <div id="updateBanner">
-        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.29) yayınlandı!</span>
+        <span>🚀 Uygulamanın yeni bir sürümü (v1.0.30) yayınlandı!</span>
         <button onclick="window.location.reload()">Şimdi Güncelle</button>
     </div>
 
     <header class="app-header">
-        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.29)</span></h1>
+        <h1 class="logo-title" id="headerLogoText">🚀 Süper Öğrenci <span style="font-size: 12px; color: var(--success);">(v1.0.30)</span></h1>
         <div class="header-actions">
             <button id="installAppBtn" style="display: none; background-color: var(--success); color: #fff; padding: 6px 12px; font-size: 11px; border-radius: 20px;">📲 Yükle</button>
             <div class="action-badge-btn" id="openFriendsModalBtn" title="Arkadaşlarım">
@@ -2023,7 +2023,7 @@
                 <span class="dz-note">Notlar, test geçmişi, yanlış defteri, ders programı, hedefler ve arkadaş listesi silinir. Bu işlem geri alınamaz. Sohbet odalarında önceden yazdığın mesajlar silinmez.</span>
             </div>
 
-            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.29</div>
+            <div style="font-size:11px; color: var(--text-muted); text-align:center;">Sürüm v1.0.30</div>
 
             <div class="modal-actions">
                 <button id="saveSettingsBtn">Kaydet</button>
@@ -2126,7 +2126,7 @@
 
     <script>
         const CENTRAL_GEMINI_API_KEY = "BURAYA_API_ANAHTARINIZI_YAZIN";
-        const APP_VERSION = "v1.0.29";
+        const APP_VERSION = "v1.0.30";
         // Telefonda konsol olmadığı için beklenmeyen hataları ekranda göster
         (function () {
             let box = null, timer = null;
@@ -2415,7 +2415,7 @@
             }
             migrateWrongBook();
 
-            const dkey = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            function dkey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }   // function: yüklenirken erken çağrılsa da hata vermez
             const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
             function todayMin() { return studyLog[dkey(new Date())] || 0; }
             function getStreak() {
